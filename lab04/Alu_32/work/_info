@@ -1,0 +1,131 @@
+m255
+K4
+z2
+!s11f vlog 2020.1 2020.02, Feb 28 2020
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dD:/Users/jjsl2/Laboratorio_ArqComp/Aula_04
+valu_64
+Z1 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
+Z2 !s110 1788983516
+!i10b 1
+!s100 Mz2:nBaB4_R@2hn[J9zEK2
+Z3 !s11b Dg1SIo80bB@j0V0VzS_@n1
+ID4c8o=VA6^IIl`9BBHG^23
+Z4 VDg1SIo80bB@j0V0VzS_@n1
+S1
+R0
+w1788981558
+8alu_64.sv
+Falu_64.sv
+!i122 0
+L0 7 8
+Z5 OV;L;2020.1;71
+r1
+!s85 0
+31
+Z6 !s108 1788983516.000000
+!s107 multiplier_tb.sv|multiplier_top.sv|multiplier_control.sv|multiplier_datapath.sv|alu_64.sv|
+Z7 !s90 -reportprogress|300|alu_64.sv|multiplier_datapath.sv|multiplier_control.sv|multiplier_top.sv|multiplier_tb.sv|
+!i113 1
+Z8 tCvgOpt 0
+vmultiplier_control
+R1
+R2
+!i10b 1
+!s100 2TZj5<2e^>9eeL:25=PZV1
+R3
+I3YSf_GC[X:i]zi7X`OfV01
+R4
+S1
+R0
+w1788981561
+8multiplier_control.sv
+Fmultiplier_control.sv
+!i122 0
+L0 23 114
+R5
+r1
+!s85 0
+31
+R6
+Z9 !s107 multiplier_tb.sv|multiplier_top.sv|multiplier_control.sv|multiplier_datapath.sv|alu_64.sv|
+R7
+!i113 1
+R8
+vmultiplier_datapath
+R1
+R2
+!i10b 1
+!s100 lBLZ]N@LMoKJ2Go2UPNoa1
+R3
+IF;RWYL<l0^@oGmFeVBRR[3
+R4
+S1
+R0
+w1788981565
+8multiplier_datapath.sv
+Fmultiplier_datapath.sv
+!i122 0
+L0 17 74
+R5
+r1
+!s85 0
+31
+R6
+R9
+R7
+!i113 1
+R8
+vmultiplier_tb
+R1
+R2
+!i10b 1
+!s100 `J86Da5FgC<o:F7@@>f<P3
+R3
+Ii?oigKU0Y31dCo<KAYfSR1
+R4
+S1
+R0
+w1788981568
+8multiplier_tb.sv
+Fmultiplier_tb.sv
+!i122 0
+L0 6 103
+R5
+r1
+!s85 0
+31
+R6
+R9
+R7
+!i113 1
+R8
+vmultiplier_top
+R1
+R2
+!i10b 1
+!s100 _nz4<GhVEB]bKaODNYe1d1
+R3
+I5FP^M]0meAHd9iM7GNb551
+R4
+S1
+R0
+w1788981571
+8multiplier_top.sv
+Fmultiplier_top.sv
+!i122 0
+L0 14 50
+R5
+r1
+!s85 0
+31
+R6
+R9
+R7
+!i113 1
+R8
