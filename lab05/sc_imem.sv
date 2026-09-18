@@ -1,42 +1,37 @@
-// =============================================================================
-// sc_imem.sv
-// Instruction Memory - single-cycle RISC-V
-//
-// Capacity  : 256 words x 32 bits = 1 KB
-// Init file : program.hex  ($readmemh format, one 32-bit word per line)
-//
-// -- Async read ---------------------------------------------------------------
-//   Implemented as a plain SystemVerilog array with a continuous assignment.
-//   instr = rom[addr] is purely combinatorial: no clock is required.
-//   Quartus infers MLAB (LUT-RAM) which natively supports async reads.
-//
-//   Timing view (50 MHz, T = 20 ns):
-//     posedge -> PC updated -> addr = pc[9:2] stable ->
-//     instr available combinatorially ->
-//     decode -> regfile -> ALU -> dmem(async) -> mux -> write_back ->
-//     setup before next posedge
-//
-//   The full 20 ns period is available for the combinatorial datapath.
-//
-// -- Address mapping ----------------------------------------------------------
-//   PC is a byte address (increments by 4).
-//   Word address = pc[9:2] (8 bits, selects 1 of 256 locations).
-// =============================================================================
-
 `timescale 1ns / 1ps
 
+// =============================================================================
+// sc_imem.sv
+// Memoria de Instrucoes (ROM) - RISC-V Monociclo
+//
+// Capacidade   : 256 palavras x 32 bits (1 KB)
+// Inicializacao: arquivo "program.hex" (formato $readmemh)
+//
+// Leitura assincrona (combinacional):
+//   O registrador de PC fornece o endereco e a instrucao fica disponivel
+//   imediatamente, sem depender de borda de clock, permitindo que a execucao
+//   ocorra inteiramente dentro do mesmo ciclo de clock.
+//
+// Mapeamento de enderecos:
+//   O PC e um endereco de bytes (incrementa de 4 em 4).
+//   O endereco de palavras conectado a esta memoria e pc[9:2] (8 bits).
+// =============================================================================
+
 module sc_imem (
-    input  logic [7:0]  addr,    // Word address: connect pc[9:2]
-    output logic [31:0] instr    // 32-bit instruction word (combinatorial)
+    input  logic [7:0]  addr,    // endereco da palavra (conectar pc[9:2])
+    output logic [31:0] instr    // palavra de instrucao de 32 bits
 );
 
     logic [31:0] rom [0:255];
 
     initial begin
-        for (int i = 0; i < 256; i++) rom[i] = 32'h00000013; // default: NOP
+        // Inicializa todas as posicoes com instrucao NOP (addi x0, x0, 0)
+        for (int i = 0; i < 256; i++) rom[i] = 32'h00000013;
+        // Carrega o programa em hexadecimal
         $readmemh("program.hex", rom);
     end
 
+    // Leitura combinacional direta
     assign instr = rom[addr];
 
 endmodule

@@ -1,60 +1,34 @@
+`timescale 1ns / 1ps
+
 // =============================================================================
 // sc_cpu_tb.sv
-// Testbench for sc_cpu - verification against golden.txt
+// Testbench para a CPU RISC-V monociclo com verificacao automatica
 //
-// -- What this testbench does --------------------------------------------------
-//   1. Runs the CPU until halt (PC stable for two consecutive cycles).
-//   2. Prints to console every register write and every memory write.
-//   3. Writes output.txt with the PC trace and final state (registers + memory).
-//   4. Compares output.txt line-by-line against golden.txt and prints PASS/FAIL.
+// Funcionamento:
+//   1. Executa a CPU ate o travamento/laco final (PC estavel por 2 ciclos).
+//   2. Imprime no console cada escrita em registrador e na memoria de dados.
+//   3. Gera o arquivo "output.txt" com o trace do PC e o estado final.
+//   4. Compara o "output.txt" com o "golden.txt" e exibe o resultado (PASS/FAIL).
 //
-// -- Prerequisites -------------------------------------------------------------
-//   golden.txt must be present in the ModelSim working directory.
-//   program.hex and data.hex must also be present there.
-//
-// -- Expected results for program.hex -----------------------------------------
-//   x0  = 00000000  (hardwired zero)
-//   x1  = 00000005  (A = 5,    lw)
-//   x2  = 00000003  (B = 3,    lw)
-//   x3  = 00000008  (A+B = 8,  add)
-//   x4  = 00000002  (A-B = 2,  sub)
-//   x5  = 00000001  (A AND B,  and)
-//   x6  = 00000007  (A OR  B,  or)
-//   x7  = 00000001  (3 < 5,    slt true)
-//   x8  = 00000000  (5 < 3,    slt false)
-//   x9  = 00000008  (lw roundtrip: mem[8] = x3)
-//   x10 = 00000000  (SKIPPED by taken beq; if executed wrongly, x10 = 16)
-//   MEM[00] = 00000005  (initial A, not overwritten)
-//   MEM[01] = 00000003  (initial B, not overwritten)
-//   MEM[02] = 00000008  (sw x3)
-//   MEM[03] = 00000002  (sw x4)
-//   MEM[04] = 00000001  (sw x5)
-//   MEM[05] = 00000007  (sw x6)
-//   MEM[06] = 00000001  (sw x7)
-//   MEM[07] = 00000000  (sw x8)
-//
-// -- How to run (ModelSim) -----------------------------------------------------
-//   vlog -sv ../sc_alu.sv ../sc_alu_ctrl.sv ../sc_control.sv  \
-//             ../sc_sign_ext.sv ../sc_regfile.sv               \
-//             ../sc_imem.sv ../sc_dmem.sv                      \
-//             ../sc_datapath.sv ../sc_cpu.sv ../sc_cpu_tb.sv
+// Como compilar e executar no ModelSim:
+//   vlib work
+//   vmap work work
+//   vlog -sv *.sv
 //   vsim work.sc_cpu_tb
 //   run -all
 // =============================================================================
 
-`timescale 1ns / 1ps
-
 module sc_cpu_tb;
 
     // =========================================================================
-    // Parameters
+    // Parametros de simulacao
     // =========================================================================
-    parameter int CLK_PERIOD   = 20;   // ns - 50 MHz
-    parameter int RESET_CYCLES = 4;    // cycles rst_n held low
-    parameter int MAX_CYCLES   = 60;   // timeout budget
+    parameter int CLK_PERIOD   = 20;   // periodo de 20 ns (clock de 50 MHz)
+    parameter int RESET_CYCLES = 4;    // quantidade de ciclos com reset ativo
+    parameter int MAX_CYCLES   = 60;   // limite maximo de ciclos para evitar loop infinito
 
     // =========================================================================
-    // DUT
+    // Sinais do DUT (Device Under Test)
     // =========================================================================
     logic        clk;
     logic        rst_n;
@@ -67,26 +41,25 @@ module sc_cpu_tb;
     );
 
     // =========================================================================
-    // Clock
+    // Gerador de Clock (periodo = 20 ns)
     // =========================================================================
     initial clk = 0;
     always #(CLK_PERIOD / 2) clk = ~clk;
 
     // =========================================================================
-    // Cycle counter (shared between monitors and main sequence)
+    // Contador de ciclos
     // =========================================================================
     int cycle = 0;
 
     // =========================================================================
-    // Register-write monitor (rising edge - same edge regfile writes)
-    // Prints every write to x1..x31 as it happens.
+    // Monitoramento das escritas no Banco de Registradores
     // =========================================================================
     always @(posedge clk) begin
         if (rst_n &&
             dut.datapath.regfile.RegWrite &&
             dut.datapath.regfile.rd != 5'b0)
         begin
-            $display("[cycle %3d] REG  x%-2d <= %08h",
+            $display("[Ciclo %3d] REG x%-2d <= %08h",
                 cycle + 1,
                 dut.datapath.regfile.rd,
                 dut.datapath.regfile.WriteData);
@@ -94,12 +67,11 @@ module sc_cpu_tb;
     end
 
     // =========================================================================
-    // Memory-write monitor (rising edge - same edge sc_dmem writes)
-    // Prints every SW as it happens.
+    // Monitoramento das escritas na Memoria de Dados (instrucao sw)
     // =========================================================================
     always @(posedge clk) begin
         if (rst_n && dut.datapath.dmem.MemWrite) begin
-            $display("[cycle %3d] MEM  [word %02h] <= %08h",
+            $display("[Ciclo %3d] MEM [palavra %02h] <= %08h",
                 cycle + 1,
                 dut.datapath.dmem.addr,
                 dut.datapath.dmem.WriteData);
@@ -107,20 +79,21 @@ module sc_cpu_tb;
     end
 
     // =========================================================================
-    // Data-memory write shadow
-    // Mirrors every SW so dump_state() can report the final memory contents.
+    // Espelho da memoria de dados para dump final
     // =========================================================================
     logic [31:0] mem_shadow [0:255];
 
-    initial
+    initial begin
         for (int i = 0; i < 256; i++) mem_shadow[i] = '0;
+    end
 
-    always @(posedge clk)
+    always @(posedge clk) begin
         if (rst_n && dut.datapath.dmem.MemWrite)
             mem_shadow[dut.datapath.dmem.addr] <= dut.datapath.dmem.WriteData;
+    end
 
     // =========================================================================
-    // Waveform dump
+    // Geracao de formas de onda (VCD)
     // =========================================================================
     initial begin
         $dumpfile("sc_cpu_tb.vcd");
@@ -128,27 +101,27 @@ module sc_cpu_tb;
     end
 
     // =========================================================================
-    // Main sequence
+    // Sequencia principal do teste
     // =========================================================================
     integer      fd;
     logic [31:0] prev_pc;
 
     initial begin
-        // --- Reset -----------------------------------------------------------
+        // --- Aplicacao do reset inicial ---
         rst_n = 0;
         repeat (RESET_CYCLES) @(posedge clk);
-        @(negedge clk);         // release between posedges to avoid metastability
+        @(negedge clk); // solta reset na descida para evitar metastabilidade
         rst_n = 1;
 
-        // --- Open output file ------------------------------------------------
+        // --- Criacao do arquivo output.txt ---
         fd = $fopen("output.txt", "w");
         if (fd == 0) begin
-            $display("ERROR: could not open output.txt.");
+            $display("ERRO: Nao foi possivel criar o arquivo output.txt.");
             $finish;
         end
 
-        // --- Run until halt (PC stable for two consecutive cycles) -----------
-        prev_pc = ~32'h0;   // sentinel - never equals a real PC on cycle 1
+        // --- Executa ate atingir a condicao de parada (PC repetido) ---
+        prev_pc = ~32'h0;
 
         while (1) begin
             @(posedge clk);
@@ -156,6 +129,7 @@ module sc_cpu_tb;
 
             $fdisplay(fd, "CYCLE %3d  PC=%08h", cycle, PC);
 
+            // Se o PC for igual ao do ciclo anterior, atingiu o branch de travamento (halt)
             if (PC === prev_pc) begin
                 dump_state();
                 break;
@@ -164,7 +138,7 @@ module sc_cpu_tb;
             prev_pc = PC;
 
             if (cycle >= MAX_CYCLES) begin
-                $display("TIMEOUT: halt not reached after %0d cycles.", MAX_CYCLES);
+                $display("ERRO: Limite de ciclos atingido (%0d ciclos). Halt nao detectado.", MAX_CYCLES);
                 $fclose(fd);
                 $finish;
             end
@@ -172,15 +146,14 @@ module sc_cpu_tb;
 
         $fclose(fd);
 
-        // --- Verify against golden -------------------------------------------
+        // --- Comparacao com o golden file ---
         verify_output();
 
         $finish;
     end
 
     // =========================================================================
-    // dump_state
-    // Appends registers x0..x10 and data-memory words 00..07 to output.txt.
+    // Salva o estado final dos registradores e da memoria no output.txt
     // =========================================================================
     task automatic dump_state;
         logic [31:0] v;
@@ -192,13 +165,13 @@ module sc_cpu_tb;
         end
 
         $fdisplay(fd, "---");
-        for (int w = 0; w <= 7; w++)
-            $fdisplay(fd, "MEM[%02d] = %08h", w, mem_shadow[w]);
+        for (int w = 0; w <= 7; w++) begin
+            $fdisplay(fd, "MEM[%2d] = %08h", w, mem_shadow[w]);
+        end
     endtask
 
     // =========================================================================
-    // verify_output
-    // Compares output.txt line-by-line against golden.txt.
+    // Compara linha a linha output.txt com golden.txt
     // =========================================================================
     task automatic verify_output;
         integer fg, fo;
@@ -208,7 +181,7 @@ module sc_cpu_tb;
 
         fg = $fopen("golden.txt", "r");
         if (fg == 0) begin
-            $display("ERROR: golden.txt not found.");
+            $display("ERRO: Arquivo golden.txt nao encontrado no diretorio de execucao.");
             return;
         end
         fo = $fopen("output.txt", "r");
@@ -225,21 +198,21 @@ module sc_cpu_tb;
             lineno++;
 
             if (ng == 0) begin
-                $display("  MISMATCH: golden.txt ended before output.txt (line %0d)", lineno);
+                $display("  DIVERGENCIA: golden.txt terminou antes de output.txt (linha %0d)", lineno);
                 errs++;
                 break;
             end
             if (no == 0) begin
-                $display("  MISMATCH: output.txt ended before golden.txt (line %0d)", lineno);
+                $display("  DIVERGENCIA: output.txt terminou antes de golden.txt (linha %0d)", lineno);
                 errs++;
                 break;
             end
 
             if (lg != lo) begin
                 errs++;
-                $display("  line %3d MISMATCH", lineno);
-                $display("    expected: %s", lg.substr(0, lg.len() - 2));
-                $display("    got:      %s", lo.substr(0, lo.len() - 2));
+                $display("  Linha %3d INCORRETA:", lineno);
+                $display("    Esperado: %s", lg.substr(0, lg.len() - 2));
+                $display("    Obtido:   %s", lo.substr(0, lo.len() - 2));
             end
         end
 
@@ -248,9 +221,9 @@ module sc_cpu_tb;
 
         $display("");
         if (errs == 0)
-            $display("=== PASS: all %0d lines match ===", lineno);
+            $display("=== PASS: Todas as %0d linhas conferem com o golden file! ===", lineno);
         else
-            $display("=== FAIL: %0d mismatch(es) in %0d lines ===", errs, lineno);
+            $display("=== FAIL: %0d divergencia(s) encontradas em %0d linhas ===", errs, lineno);
     endtask
 
 endmodule

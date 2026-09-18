@@ -1,34 +1,28 @@
+`timescale 1ns / 1ps
+
 // =============================================================================
 // sc_datapath.sv
-// Datapath - single-cycle RISC-V (Figure 4.17 - Patterson & Hennessy)
+// Caminho de Dados (Datapath) - RISC-V Monociclo
+// Baseado no livro do Patterson & Hennessy (Figura 4.17)
 //
-// Instantiates and connects all datapath components:
+// Componentes instanciados e conectados:
+//   - sc_imem    : memoria de instrucoes (256 palavras, program.hex)
+//   - sc_regfile : banco com 32 registradores de 32 bits (x0 = 0)
+//   - sc_sign_ext: gerador de imediatos com extensao de sinal (formatos I, S, B)
+//   - sc_alu_ctrl: decodificador do controle da ALU
+//   - sc_alu     : unidade logica e aritmetica de 32 bits
+//   - sc_dmem    : memoria de dados (256 palavras, data.hex)
 //
-//   sc_imem    : instruction memory (256 words, program.hex)
-//   sc_regfile : 32 x 32-bit register file
-//   sc_sign_ext: sign extender (I / S / B immediate formats)
-//   sc_alu_ctrl: ALU control (ALUOp + Funct3/Funct7 -> Operation)
-//   sc_alu     : 32-bit ALU (add, sub, or, and, slt)
-//   sc_dmem    : data memory (256 words, data.hex)
-//
-// Muxes implemented as combinatorial assigns:
-//   ALU Source  : ALUSrc  -> selects register rs2 or sign-extended immediate
-//   Write-back  : MemtoReg-> selects ALU result or data memory output
-//   PC source   : PCSrc   -> selects PC+4 or branch target
-//
-// PC computation:
-//   pc_plus4   = pc_reg + 4          (sequential fetch)
-//   pc_branch  = pc_reg + ImmExt     (branch target; B-type imm includes the x2 shift)
-//   PCSrc      = Branch AND Zero     (take branch only on BEQ with equal operands)
-//   pc_next    = PCSrc ? pc_branch : pc_plus4
+// Multiplexadores do datapath:
+//   - Mux da ALU   : ALUSrc   -> seleciona entre registrador rs2 e o imediato
+//   - Mux de WB     : MemtoReg -> seleciona saida da ALU ou dado lido da memoria
+//   - Mux do PC     : PCSrc    -> seleciona PC+4 ou o endereco de desvio (branch)
 // =============================================================================
-
-`timescale 1ns / 1ps
 
 module sc_datapath (
     input  logic        clk,
-    input  logic        rst_n,    // Active-low asynchronous reset -> PC = 0
-    // Control signals (from sc_control)
+    input  logic        rst_n,    // reset assincrono ativo em nivel baixo (zera PC)
+    // Sinais de controle vindos da sc_control
     input  logic        ALUSrc,
     input  logic        MemtoReg,
     input  logic        RegWrite,
@@ -36,40 +30,41 @@ module sc_datapath (
     input  logic        MemWrite,
     input  logic        Branch,
     input  logic [1:0]  ALUOp,
-    // Opcode fed back to the control unit
+    // Opcode enviado para a unidade de controle
     output logic [6:0]  Opcode,
-    // Observability: current PC (useful for SignalTap / testbench)
+    // Valor atual do PC para o testbench / depuracao
     output logic [31:0] PC
 );
 
     // -------------------------------------------------------------------------
-    // Internal wires
+    // Sinais internos
     // -------------------------------------------------------------------------
-    logic [31:0] pc_reg;        // Current program counter
-    logic [31:0] pc_plus4;      // pc + 4
-    logic [31:0] pc_branch;     // pc + ImmExt  (branch target)
-    logic [31:0] pc_next;       // Selected next PC
-    logic        pc_src;        // 1 = take branch
+    logic [31:0] pc_reg;        // registrador do PC atual
+    logic [31:0] pc_plus4;      // PC + 4 (proxima instrucao sequencial)
+    logic [31:0] pc_branch;     // PC + ImmExt (alvo do desvio)
+    logic [31:0] pc_next;       // proximo valor a ser carregado no PC
+    logic        pc_src;        // 1 = toma o desvio (Branch & Zero)
 
-    logic [31:0] instr;         // Instruction word from imem
+    logic [31:0] instr;         // instrucao lida da memoria
 
-    // Instruction fields (combinatorial decode)
+    // Campos decodificados da instrucao
     logic [4:0]  rs1, rs2, rd;
     logic [2:0]  funct3;
     logic [6:0]  funct7;
 
-    logic [31:0] read_data1;    // Register file rs1 output
-    logic [31:0] read_data2;    // Register file rs2 output
-    logic [31:0] imm_ext;       // Sign-extended immediate
-    logic [31:0] alu_srcb;      // ALU second operand (mux output)
-    logic [3:0]  alu_op;        // ALU operation code
-    logic [31:0] alu_result;    // ALU computation result
-    logic        zero;          // ALU zero flag (1 when alu_result == 0)
-    logic [31:0] mem_read_data; // Data memory read output
-    logic [31:0] write_back;    // Value written into the register file
+    logic [31:0] read_data1;    // saida da porta 1 do banco de registradores (rs1)
+    logic [31:0] read_data2;    // saida da porta 2 do banco de registradores (rs2)
+    logic [31:0] imm_ext;       // imediato estendido para 32 bits
+    logic [31:0] alu_srcb;      // segundo operando da ALU (saida do mux)
+    logic [3:0]  alu_op;        // codigo de operacao da ALU
+    logic [31:0] alu_result;    // resultado calculado pela ALU
+    logic        zero;          // flag Zero da ALU (1 se alu_result == 0)
+    logic [31:0] mem_read_data; // dado lido da memoria de dados
+    logic [31:0] write_back;    // dado que sera gravado no registrador rd
 
     // -------------------------------------------------------------------------
-    // PC Register (asynchronous reset to address 0)
+    // Registrador de PC
+    // Atualiza na borda de subida do clock ou zera com reset assincrono
     // -------------------------------------------------------------------------
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) pc_reg <= 32'b0;
@@ -79,8 +74,8 @@ module sc_datapath (
     assign PC = pc_reg;
 
     // -------------------------------------------------------------------------
-    // Instruction Memory
-    // Word address = pc[9:2]; async read - addr drives rom[] combinatorially
+    // Memoria de Instrucoes
+    // Enderecamento por palavra: pc[9:2]
     // -------------------------------------------------------------------------
     sc_imem imem (
         .addr  (pc_reg[9:2]),
@@ -88,10 +83,7 @@ module sc_datapath (
     );
 
     // -------------------------------------------------------------------------
-    // Instruction Decode
-    // RISC-V 32-bit instruction layout:
-    //   [31:25] funct7  [24:20] rs2  [19:15] rs1
-    //   [14:12] funct3  [11:7]  rd   [6:0]   opcode
+    // Decodificacao dos campos da instrucao (RISC-V de 32 bits)
     // -------------------------------------------------------------------------
     assign Opcode = instr[6:0];
     assign rd     = instr[11:7];
@@ -101,7 +93,7 @@ module sc_datapath (
     assign funct7 = instr[31:25];
 
     // -------------------------------------------------------------------------
-    // Register File
+    // Banco de Registradores
     // -------------------------------------------------------------------------
     sc_regfile regfile (
         .clk       (clk),
@@ -115,7 +107,7 @@ module sc_datapath (
     );
 
     // -------------------------------------------------------------------------
-    // Sign Extender
+    // Gerador de Imediatos com Extensao de Sinal
     // -------------------------------------------------------------------------
     sc_sign_ext sign_ext (
         .Instr  (instr),
@@ -123,14 +115,14 @@ module sc_datapath (
     );
 
     // -------------------------------------------------------------------------
-    // ALU Source Mux
-    //   ALUSrc = 0 -> use rs2 register value (R-type, BEQ)
-    //   ALUSrc = 1 -> use sign-extended immediate (LW, SW)
+    // Mux para selecao do segundo operando da ALU
+    // ALUSrc = 0 -> usa registrador rs2 (Tipo-R, beq)
+    // ALUSrc = 1 -> usa imediato com extensao de sinal (lw, sw)
     // -------------------------------------------------------------------------
     assign alu_srcb = ALUSrc ? imm_ext : read_data2;
 
     // -------------------------------------------------------------------------
-    // ALU Control
+    // Controle da ALU (decodifica ALUOp + funct3/funct7)
     // -------------------------------------------------------------------------
     sc_alu_ctrl alu_ctrl (
         .ALUOp    (ALUOp),
@@ -140,7 +132,7 @@ module sc_datapath (
     );
 
     // -------------------------------------------------------------------------
-    // ALU
+    // ALU Principal
     // -------------------------------------------------------------------------
     sc_alu alu (
         .SrcA     (read_data1),
@@ -151,8 +143,8 @@ module sc_datapath (
     );
 
     // -------------------------------------------------------------------------
-    // Data Memory
-    // Word address = alu_result[9:2]; async read - addr drives ram[] combinatorially
+    // Memoria de Dados
+    // Enderecamento por palavra: alu_result[9:2]
     // -------------------------------------------------------------------------
     sc_dmem dmem (
         .clk       (clk),
@@ -163,16 +155,15 @@ module sc_datapath (
     );
 
     // -------------------------------------------------------------------------
-    // Write-Back Mux
-    //   MemtoReg = 0 -> write ALU result  (R-type)
-    //   MemtoReg = 1 -> write memory data (LW)
+    // Mux de Write-Back (retorno para o registrador)
+    // MemtoReg = 0 -> resultado da ALU (Tipo-R)
+    // MemtoReg = 1 -> dado da memoria (lw)
     // -------------------------------------------------------------------------
     assign write_back = MemtoReg ? mem_read_data : alu_result;
 
     // -------------------------------------------------------------------------
-    // Branch Logic and Next-PC Selection
-    //   BEQ is taken when Branch=1 AND Zero=1 (rs1 == rs2 after SUB)
-    //   Branch target = pc_reg + ImmExt  (B-type immediate, bit 0 = 0)
+    // Logica de Desvio (Branch) e calculo do proximo PC
+    // BEQ e tomado quando Branch=1 E Zero=1 (rs1 == rs2 na subtracao)
     // -------------------------------------------------------------------------
     assign pc_plus4  = pc_reg + 32'd4;
     assign pc_branch = pc_reg + imm_ext;

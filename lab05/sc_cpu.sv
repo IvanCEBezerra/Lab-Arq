@@ -1,29 +1,29 @@
+`timescale 1ns / 1ps
+
 // =============================================================================
 // sc_cpu.sv
-// Single-cycle RISC-V CPU
+// CPU RISC-V Monociclo
 //
-// Bundles the main control unit (sc_control) and the datapath (sc_datapath)
-// into a single CPU module.
+// Conecta a unidade de controle principal (sc_control) com o caminho de dados
+// (sc_datapath).
 //
-// Supported instructions:
-//   add  sub  and  or  slt   (R-type, opcode 0110011)
-//   lw                       (I-type, opcode 0000011)
-//   sw                       (S-type, opcode 0100011)
-//   beq                      (B-type, opcode 1100011)
+// Instrucoes suportadas:
+//   - Tipo-R (opcode 0110011): add, sub, and, or, slt
+//   - Tipo-I (opcode 0000011): lw
+//   - Tipo-S (opcode 0100011): sw
+//   - Tipo-B (opcode 1100011): beq
 // =============================================================================
-
-`timescale 1ns / 1ps
 
 module sc_cpu (
     input  logic        clk,
-    input  logic        rst_n,    // active-low asynchronous reset
+    input  logic        rst_n,    // reset assincrono ativo em nivel baixo
 
-    // Observability
+    // Sinais de observabilidade
     output logic [31:0] PC
 );
 
     // -------------------------------------------------------------------------
-    // Control signals
+    // Sinais de controle gerados pela unidade de controle
     // -------------------------------------------------------------------------
     logic [6:0] opcode;
     logic       ALUSrc;
@@ -35,7 +35,7 @@ module sc_cpu (
     logic [1:0] ALUOp;
 
     // -------------------------------------------------------------------------
-    // Control Unit
+    // Instanciacao da Unidade de Controle
     // -------------------------------------------------------------------------
     sc_control ctrl (
         .Opcode   (opcode),
@@ -49,7 +49,7 @@ module sc_cpu (
     );
 
     // -------------------------------------------------------------------------
-    // Datapath
+    // Instanciacao do Caminho de Dados (Datapath)
     // -------------------------------------------------------------------------
     sc_datapath datapath (
         .clk       (clk),

@@ -1,33 +1,33 @@
+`timescale 1ns / 1ps
+
 // =============================================================================
 // sc_alu_ctrl.sv
-// ALU Control Unit - single-cycle RISC-V (Section 4.4 - Patterson & Hennessy)
+// Unidade de Controle da ALU - RISC-V Monociclo
 //
-// Receives the 2-bit ALUOp from the main control unit and the instruction
-// function fields (Funct7, Funct3). Produces the 4-bit Operation code for
-// the ALU.
+// Recebe o sinal ALUOp de 2 bits da unidade de controle principal e os campos
+// funct7 e funct3 da instrucao para gerar o codigo de operacao de 4 bits
+// para a ALU.
 //
-// ALUOp encoding (defined in sc_control.sv):
-//   2'b00 : Load / Store  -> force ADD (compute address: rs1 + imm)
-//   2'b01 : Branch BEQ    -> force SUB (compare: rs1 - rs2, check Zero)
-//   2'b10 : R-type        -> use Funct7[5] and Funct3 to select operation
+// Codificacao do sinal ALUOp:
+//   2'b00 : Load / Store -> forca soma (calculo de endereco base + offset)
+//   2'b01 : Branch BEQ   -> forca subtracao (para comparacao rs1 - rs2)
+//   2'b10 : Tipo-R       -> decodifica conforme Funct7[5] e Funct3
 //
-// Operation output encoding (consumed by sc_alu.sv):
+// Codigo de operacao para a ALU (sc_alu.sv):
 //   4'd01 : ADD
 //   4'd02 : SUB
 //   4'd04 : OR
 //   4'd05 : AND
 //   4'd11 : SLT
 //
-// R-type decoding table (from RISC-V spec):
-//   Funct7   | Funct3 | Instruction
+// Tabela de decodificacao para instrucoes do Tipo-R:
+//   Funct7   | Funct3 | Instrucao
 //   0000000  |  000   | ADD
-//   0100000  |  000   | SUB  (Funct7[5] = 1 distinguishes SUB from ADD)
+//   0100000  |  000   | SUB  (Funct7[5] = 1 diferencia SUB de ADD)
 //   0000000  |  110   | OR
 //   0000000  |  111   | AND
 //   0000000  |  010   | SLT
 // =============================================================================
-
-`timescale 1ns / 1ps
 
 module sc_alu_ctrl (
     input  logic [1:0] ALUOp,
@@ -42,9 +42,9 @@ module sc_alu_ctrl (
 
             2'b01: Operation = 4'd02; // Branch BEQ  -> SUB
 
-            2'b10: begin              // R-type: decode from Funct7 and Funct3
+            2'b10: begin              // Tipo-R: decodifica usando Funct7 e Funct3
                 case (Funct3)
-                    // Funct7[5]=1 -> SUB, Funct7[5]=0 -> ADD
+                    // Funct7[5]=1 indica SUB; Funct7[5]=0 indica ADD
                     3'h0: Operation = Funct7[5] ? 4'd02 : 4'd01;
                     3'h6: Operation = 4'd04; // OR
                     3'h7: Operation = 4'd05; // AND

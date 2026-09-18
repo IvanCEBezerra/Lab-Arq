@@ -1,27 +1,25 @@
+`timescale 1ns / 1ps
+
 // =============================================================================
 // sc_top.sv
-// Top-level module - single-cycle RISC-V
+// Modulo top-level do processador RISC-V monociclo
 //
-// Hierarchy:
+// Hierarquia do projeto:
 //   sc_top
-//     sc_cpu          - RISC-V CPU (control + datapath)
-//       sc_control
-//       sc_datapath
-//         sc_imem, sc_regfile, sc_sign_ext
-//         sc_alu_ctrl, sc_alu
-//         sc_dmem
+//     sc_cpu          - Nucleo da CPU (controle + datapath)
+//       sc_control    - Decodificador de instrucoes / unidade de controle
+//       sc_datapath   - Caminho de dados completo
+//         sc_imem, sc_regfile, sc_sign_ext, sc_alu_ctrl, sc_alu, sc_dmem
 //
-// Target board: DE2-115 (Intel Cyclone IV E, 50 MHz clock)
-//   CLOCK_50  -> clk
-//   KEY[0]    -> rst_n    (active-low push-button reset)
+// Placa-alvo: Altera DE2-115 (FPGA Cyclone IV E, clock de 50 MHz)
+//   CLOCK_50 -> clk
+//   KEY[0]   -> rst_n (reset ativo em nivel baixo)
 // =============================================================================
-
-`timescale 1ns / 1ps
 
 module sc_top (
     input  logic        clk,
-    input  logic        rst_n,    // active-low reset (KEY[0] on DE2-115)
-    output logic [31:0] PC        // current PC (SignalTap / testbench)
+    input  logic        rst_n,    // reset assincrono ativo em nivel baixo (KEY[0])
+    output logic [31:0] PC        // valor atual do PC (para debug e testbench)
 );
 
     sc_cpu cpu (

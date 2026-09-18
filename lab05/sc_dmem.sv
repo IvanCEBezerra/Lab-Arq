@@ -1,45 +1,47 @@
+`timescale 1ns / 1ps
+
 // =============================================================================
 // sc_dmem.sv
-// Data Memory - single-cycle RISC-V
+// Memoria de Dados (RAM) - RISC-V Monociclo
 //
-// Capacity  : 256 words x 32 bits = 1 KB (word-aligned, LW/SW only)
-// Init file : data.hex  ($readmemh format, one 32-bit word per line)
+// Capacidade   : 256 palavras x 32 bits (1 KB)
+// Inicializacao: arquivo "data.hex" (formato $readmemh)
 //
-// -- Async read ---------------------------------------------------------------
-//   ReadData = ram[addr] is a continuous assignment - purely combinatorial.
-//   As soon as alu_result is stable, ReadData is valid with no clock needed.
-//   Quartus infers MLAB (LUT-RAM) which natively supports async reads.
+// Leituras:
+//   Assincronas/combinacionais (assign ReadData = ram[addr]).
+//   Assim que o endereco da ALU se estabiliza, o dado de leitura fica pronto.
 //
-// -- Sync write ---------------------------------------------------------------
-//   SW writes are committed on posedge clk, the same edge used by the
-//   register file. A SW in cycle N writes memory at the end of cycle N;
-//   the next LW in cycle N+1 reads the updated value.
+// Escritas (instrucao sw):
+//   Sincronas na borda de subida do clock quando MemWrite estiver ativo.
 //
-// -- Address mapping ----------------------------------------------------------
-//   ALU computes a byte address; the word address is alu_result[9:2].
-//   Only word-aligned LW/SW are supported (Section 4.4 subset).
+// Mapeamento de enderecos:
+//   A ALU calcula um endereco de bytes; o endereco de palavras e alu_result[9:2].
 // =============================================================================
-
-`timescale 1ns / 1ps
 
 module sc_dmem (
     input  logic        clk,
-    input  logic        MemWrite,    // 1 = write WriteData to addr (SW)
-    input  logic [7:0]  addr,        // Word address: connect alu_result[9:2]
-    input  logic [31:0] WriteData,   // Data to write (rs2 value)
-    output logic [31:0] ReadData     // Data read (combinatorial)
+    input  logic        MemWrite,    // 1 = escreve WriteData no endereco (sw)
+    input  logic [7:0]  addr,        // endereco da palavra: alu_result[9:2]
+    input  logic [31:0] WriteData,   // dado para escrita (vindo de rs2)
+    output logic [31:0] ReadData     // dado lido da memoria (combinacional)
 );
 
     logic [31:0] ram [0:255];
 
     initial begin
+        // Zera a memoria inicialmente
         for (int i = 0; i < 256; i++) ram[i] = 32'h0;
+        // Carrega os dados iniciais do arquivo
         $readmemh("data.hex", ram);
     end
 
-    assign ReadData = ram[addr];   // async read
+    // Leitura assincrona
+    assign ReadData = ram[addr];
 
-    always @(posedge clk)          // sync write
-        if (MemWrite) ram[addr] <= WriteData;
+    // Escrita sincrona na borda de subida do clock
+    always @(posedge clk) begin
+        if (MemWrite)
+            ram[addr] <= WriteData;
+    end
 
 endmodule

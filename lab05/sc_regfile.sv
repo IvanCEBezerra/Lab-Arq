@@ -1,51 +1,46 @@
+`timescale 1ns / 1ps
+
 // =============================================================================
 // sc_regfile.sv
-// 32 x 32-bit Register File - single-cycle RISC-V
+// Banco de Registradores (32 registradores de 32 bits) - RISC-V Monociclo
 //
-// Reads  : asynchronous (combinatorial) - results are available immediately
-// Writes : synchronous on the rising edge of clk
+// Leituras : assincronas (combinacionais) - dados disponiveis imediatamente
+// Escritas : sincronas na borda de subida do clock
 //
-// Register x0 (index 0) is hardwired to zero per the RISC-V specification:
-//   - reads always return 0 regardless of what was written
-//   - writes to x0 are silently discarded
+// O registrador x0 e fixado em zero conforme a especificacao RISC-V:
+//   - Leituras em x0 sempre retornam zero
+//   - Escritas em x0 sao descartadas
 // =============================================================================
-
-`timescale 1ns / 1ps
 
 module sc_regfile (
     input  logic        clk,
-    input  logic        RegWrite,   // 1 = write WriteData into register rd
-    input  logic [4:0]  rs1,        // Source register 1 address
-    input  logic [4:0]  rs2,        // Source register 2 address
-    input  logic [4:0]  rd,         // Destination register address
-    input  logic [31:0] WriteData,  // Data to write into rd
-    output logic [31:0] ReadData1,  // rs1 value
-    output logic [31:0] ReadData2   // rs2 value
+    input  logic        RegWrite,   // habilita gravacao no registrador rd
+    input  logic [4:0]  rs1,        // endereco do primeiro registrador fonte
+    input  logic [4:0]  rs2,        // endereco do segundo registrador fonte
+    input  logic [4:0]  rd,         // endereco do registrador de destino
+    input  logic [31:0] WriteData,  // dado a ser gravado em rd
+    output logic [31:0] ReadData1,  // dado lido de rs1
+    output logic [31:0] ReadData2   // dado lido de rs2
 );
 
     logic [31:0] regs [31:0];
 
-    // Initialize to 0 for simulation (ModelSim starts arrays at X).
-    // Quartus ignores 'initial' blocks during synthesis; on the FPGA all
-    // flip-flops power up at 0 after bitstream programming.
+    // Inicializacao dos registradores com zero para simulacao no ModelSim
     initial begin
         for (int i = 0; i < 32; i++)
             regs[i] = 32'b0;
     end
 
     // -------------------------------------------------------------------------
-    // Asynchronous reads
-    // x0 is hardwired to zero: override any stored value at index 0
+    // Leituras assincronas
+    // Se o registrador selecionado for x0 (endereco 0), retorna 0 diretamente
     // -------------------------------------------------------------------------
     assign ReadData1 = (rs1 == 5'b0) ? 32'b0 : regs[rs1];
     assign ReadData2 = (rs2 == 5'b0) ? 32'b0 : regs[rs2];
 
     // -------------------------------------------------------------------------
-    // Synchronous write on rising edge
-    // Writing to x0 is ignored (rd != 0 guard)
-    // Using 'always' instead of 'always_ff' so that ModelSim allows the
-    // separate 'initial' block above to coexist on the same variable.
-    // Synthesis result is identical: Quartus infers flip-flops either way.
+    // Escrita sincrona na borda de subida do clock
+    // Garante que x0 nunca seja sobrescrito (rd != 0)
     // -------------------------------------------------------------------------
     always @(posedge clk) begin
         if (RegWrite && rd != 5'b0)

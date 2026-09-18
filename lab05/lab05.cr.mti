@@ -1,0 +1,78 @@
+C:/Users/vini0/Documents/Lab-Arq/lab05/sc_dmem.sv {1 {vlog -work work -sv -stats=none C:/Users/vini0/Documents/Lab-Arq/lab05/sc_dmem.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module sc_dmem
+
+Top level modules:
+	sc_dmem
+
+} {} {}} C:/Users/vini0/Documents/Lab-Arq/lab05/sc_datapath.sv {1 {vlog -work work -sv -stats=none C:/Users/vini0/Documents/Lab-Arq/lab05/sc_datapath.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module sc_datapath
+
+Top level modules:
+	sc_datapath
+
+} {} {}} C:/Users/vini0/Documents/Lab-Arq/lab05/sc_top.sv {1 {vlog -work work -sv -stats=none C:/Users/vini0/Documents/Lab-Arq/lab05/sc_top.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module sc_top
+
+Top level modules:
+	sc_top
+
+} {} {}} C:/Users/vini0/Documents/Lab-Arq/lab05/sc_imem.sv {1 {vlog -work work -sv -stats=none C:/Users/vini0/Documents/Lab-Arq/lab05/sc_imem.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module sc_imem
+
+Top level modules:
+	sc_imem
+
+} {} {}} C:/Users/vini0/Documents/Lab-Arq/lab05/sc_cpu.sv {1 {vlog -work work -sv -stats=none C:/Users/vini0/Documents/Lab-Arq/lab05/sc_cpu.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module sc_cpu
+
+Top level modules:
+	sc_cpu
+
+} {} {}} C:/Users/vini0/Documents/Lab-Arq/lab05/sc_sign_ext.sv {1 {vlog -work work -sv -stats=none C:/Users/vini0/Documents/Lab-Arq/lab05/sc_sign_ext.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module sc_sign_ext
+
+Top level modules:
+	sc_sign_ext
+
+} {} {}} C:/Users/vini0/Documents/Lab-Arq/lab05/sc_cpu_tb.sv {1 {vlog -work work -sv -stats=none C:/Users/vini0/Documents/Lab-Arq/lab05/sc_cpu_tb.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module sc_cpu_tb
+
+Top level modules:
+	sc_cpu_tb
+
+} {} {}} C:/Users/vini0/Documents/Lab-Arq/lab05/sc_control.sv {1 {vlog -work work -sv -stats=none C:/Users/vini0/Documents/Lab-Arq/lab05/sc_control.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module sc_control
+
+Top level modules:
+	sc_control
+
+} {} {}} C:/Users/vini0/Documents/Lab-Arq/lab05/sc_regfile.sv {1 {vlog -work work -sv -stats=none C:/Users/vini0/Documents/Lab-Arq/lab05/sc_regfile.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module sc_regfile
+
+Top level modules:
+	sc_regfile
+
+} {} {}} C:/Users/vini0/Documents/Lab-Arq/lab05/sc_alu_ctrl.sv {1 {vlog -work work -sv -stats=none C:/Users/vini0/Documents/Lab-Arq/lab05/sc_alu_ctrl.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module sc_alu_ctrl
+
+Top level modules:
+	sc_alu_ctrl
+
+} {} {}} C:/Users/vini0/Documents/Lab-Arq/lab05/sc_alu.sv {1 {vlog -work work -sv -stats=none C:/Users/vini0/Documents/Lab-Arq/lab05/sc_alu.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 10.5b Compiler 2016.10 Oct  5 2016
+-- Compiling module sc_alu
+
+Top level modules:
+	sc_alu
+
+} {} {}}

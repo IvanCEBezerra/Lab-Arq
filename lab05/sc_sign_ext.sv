@@ -1,55 +1,62 @@
-// =============================================================================
-// sc_sign_ext.sv
-// Sign Extender - single-cycle RISC-V (Section 4.4 - Patterson & Hennessy)
-//
-// Reads the opcode to select the correct immediate format and sign-extends
-// the immediate field to 32 bits.
-//
-// Supported formats:
-//
-//   I-type (lw):
-//     imm[11:0]  = inst[31:20]
-//     ImmExt     = { {20{inst[31]}}, inst[31:20] }
-//
-//   S-type (sw):
-//     imm[11:5]  = inst[31:25]
-//     imm[4:0]   = inst[11:7]
-//     ImmExt     = { {20{inst[31]}}, inst[31:25], inst[11:7] }
-//
-//   B-type (beq):
-//     imm[12]    = inst[31]
-//     imm[11]    = inst[7]
-//     imm[10:5]  = inst[30:25]
-//     imm[4:1]   = inst[11:8]
-//     imm[0]     = 0   (branch offsets are always 2-byte aligned)
-//     ImmExt     = { {19{inst[31]}}, inst[31], inst[7], inst[30:25], inst[11:8], 1'b0 }
-// =============================================================================
-
 `timescale 1ns / 1ps
 
+// =============================================================================
+// sc_sign_ext.sv
+// Gerador de Imediatos com Extensao de Sinal - RISC-V Monociclo
+//
+// Identifica o opcode da instrucao para extrair os bits do campo imediato e
+// estende o sinal para 32 bits.
+//
+// Formatos suportados:
+//
+//   Tipo-I (lw):
+//     imm[11:0] = inst[31:20]
+//     ImmExt    = { {20{inst[31]}}, inst[31:20] }
+//
+//   Tipo-S (sw):
+//     imm[11:5] = inst[31:25]
+//     imm[4:0]  = inst[11:7]
+//     ImmExt    = { {20{inst[31]}}, inst[31:25], inst[11:7] }
+//
+//   Tipo-B (beq):
+//     imm[12]   = inst[31]
+//     imm[11]   = inst[7]
+//     imm[10:5] = inst[30:25]
+//     imm[4:1]  = inst[11:8]
+//     imm[0]    = 0 (desvios sao alinhados a multiplos de 2 bytes)
+//     ImmExt    = { {19{inst[31]}}, inst[31], inst[7], inst[30:25], inst[11:8], 1'b0 }
+// =============================================================================
+
 module sc_sign_ext (
-    input  logic [31:0] Instr,   // Full 32-bit instruction word
-    output logic [31:0] ImmExt   // Sign-extended 32-bit immediate
+    input  logic [31:0] Instr,   // palavra de instrucao de 32 bits
+    output logic [31:0] ImmExt   // imediato estendido para 32 bits
 );
 
-    localparam LOAD   = 7'b0000011; // lw  (I-type)
-    localparam STORE  = 7'b0100011; // sw  (S-type)
-    localparam BRANCH = 7'b1100011; // beq (B-type)
+    localparam LOAD   = 7'b0000011; // lw  (Tipo-I)
+    localparam STORE  = 7'b0100011; // sw  (Tipo-S)
+    localparam BRANCH = 7'b1100011; // beq (Tipo-B)
 
     always_comb begin
         case (Instr[6:0])
-            LOAD:   // I-type: 12-bit immediate in inst[31:20]
+            LOAD: begin
+                // Tipo-I: imediato de 12 bits localizado em Instr[31:20]
                 ImmExt = {{20{Instr[31]}}, Instr[31:20]};
+            end
 
-            STORE:  // S-type: split immediate inst[31:25] | inst[11:7]
+            STORE: begin
+                // Tipo-S: imediato dividido entre Instr[31:25] e Instr[11:7]
                 ImmExt = {{20{Instr[31]}}, Instr[31:25], Instr[11:7]};
+            end
 
-            BRANCH: // B-type: inst[31] inst[7] inst[30:25] inst[11:8] 0
+            BRANCH: begin
+                // Tipo-B: imediato com bits embaralhados e bit 0 sempre 0
                 ImmExt = {{19{Instr[31]}}, Instr[31], Instr[7],
                           Instr[30:25], Instr[11:8], 1'b0};
+            end
 
-            default:
+            default: begin
                 ImmExt = 32'b0;
+            end
         endcase
     end
 

@@ -1,0 +1,4 @@
+// data.hex - formato $readmemh para memoria de dados (sc_dmem)
+@000 00000005
+@001 00000003
+
