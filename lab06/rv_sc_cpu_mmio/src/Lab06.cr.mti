@@ -1,0 +1,104 @@
+D:/Users/jjsl2/rv_sc_cpu_mmio/src/pll_10mhz.v {1 {vlog -work work -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/pll_10mhz.v
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module pll_10mhz
+
+Top level modules:
+	pll_10mhz
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_cpu.sv {1 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_cpu.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_cpu
+
+Top level modules:
+	sc_cpu
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_imem.sv {1 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_imem.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_imem
+
+Top level modules:
+	sc_imem
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_control.sv {1 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_control.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_control
+
+Top level modules:
+	sc_control
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_top_no_pll.sv {1 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_top_no_pll.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_top_no_pll
+
+Top level modules:
+	sc_top_no_pll
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_alu_ctrl.sv {1 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_alu_ctrl.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_alu_ctrl
+
+Top level modules:
+	sc_alu_ctrl
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_datapath.sv {1 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_datapath.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_datapath
+
+Top level modules:
+	sc_datapath
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_sign_ext.sv {1 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_sign_ext.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_sign_ext
+
+Top level modules:
+	sc_sign_ext
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_alu.sv {1 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_alu.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_alu
+
+Top level modules:
+	sc_alu
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_mmio.sv {0 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_mmio.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_mmio
+** Error (suppressible): D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_mmio.sv(91): (vlog-2388) 'tx_byte' already declared in this scope (sc_mmio) at D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_mmio.sv(72).
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_top.sv {1 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_top.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_top
+
+Top level modules:
+	sc_top
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_dmem.sv {1 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_dmem.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_dmem
+
+Top level modules:
+	sc_dmem
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_uart.sv {1 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_uart.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_uart
+
+Top level modules:
+	sc_uart
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_cpu_tb.sv {1 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_cpu_tb.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_cpu_tb
+
+Top level modules:
+	sc_cpu_tb
+
+} {} {}} D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_regfile.sv {1 {vlog -work work -sv -stats=none D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_regfile.sv
+Model Technology ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020
+-- Compiling module sc_regfile
+
+Top level modules:
+	sc_regfile
+
+} {} {}}

@@ -1,0 +1,58 @@
+ls
+# Lab06.mpf       sc_control.sv   sc_dmem.sv     sc_sign_ext.sv    transcript  
+# pll_10mhz.v     sc_cpu.sv       sc_imem.sv     sc_top.sv         work        
+# sc_alu.sv       sc_cpu_tb.sv    sc_mmio.sv     sc_top_no_pll.sv              
+# sc_alu_ctrl.sv  sc_datapath.sv  sc_regfile.sv  sc_uart.sv                    
+# Compile of pll_10mhz.v was successful.
+# Compile of sc_alu.sv was successful.
+# Compile of sc_alu_ctrl.sv was successful.
+# Compile of sc_control.sv was successful.
+# Compile of sc_cpu.sv was successful.
+# Compile of sc_cpu_tb.sv was successful.
+# Compile of sc_datapath.sv was successful.
+# Compile of sc_dmem.sv was successful.
+# Compile of sc_imem.sv was successful.
+# Compile of sc_mmio.sv failed with 1 errors.
+# Compile of sc_regfile.sv was successful.
+# Compile of sc_sign_ext.sv was successful.
+# Compile of sc_top.sv was successful.
+# Compile of sc_top_no_pll.sv was successful.
+# Compile of sc_uart.sv was successful.
+# 15 compiles, 1 failed with 1 error.
+# Compile of pll_10mhz.v was successful.
+# Compile of sc_alu.sv was successful.
+# Compile of sc_alu_ctrl.sv was successful.
+# Compile of sc_control.sv was successful.
+# Compile of sc_cpu.sv was successful.
+# Compile of sc_cpu_tb.sv was successful.
+# Compile of sc_datapath.sv was successful.
+# Compile of sc_dmem.sv was successful.
+# Compile of sc_imem.sv was successful.
+# Compile of sc_mmio.sv failed with 1 errors.
+# Compile of sc_regfile.sv was successful.
+# Compile of sc_sign_ext.sv was successful.
+# Compile of sc_top.sv was successful.
+# Compile of sc_top_no_pll.sv was successful.
+# Compile of sc_uart.sv was successful.
+# 15 compiles, 1 failed with 1 error.
+vsim -gui work.sc_cpu_tb
+# vsim -gui work.sc_cpu_tb 
+# Start time: 09:25:35 on Oct 01,2026
+# Loading sv_std.std
+# Loading work.sc_cpu_tb
+# Loading work.sc_cpu
+# Loading work.sc_control
+# Loading work.sc_datapath
+# Loading work.sc_imem
+# Loading work.sc_regfile
+# Loading work.sc_sign_ext
+# Loading work.sc_alu_ctrl
+# Loading work.sc_alu
+# Loading work.sc_dmem
+# ** Error: (vsim-3033) Instantiation of 'sc_mmio' failed. The design unit was not found.
+#    Time: 0 ps  Iteration: 0  Instance: /sc_cpu_tb/dut/datapath File: D:/Users/jjsl2/rv_sc_cpu_mmio/src/sc_datapath.sv Line: 198
+#         Searched libraries:
+#             D:/Users/jjsl2/rv_sc_cpu_mmio/src/work
+# Error loading design
+# End time: 09:25:35 on Oct 01,2026, Elapsed time: 0:00:00
+# Errors: 1, Warnings: 6
