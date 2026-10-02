@@ -1,40 +1,32 @@
-INIT:
-lw x1,0(x0) // x1 = data[0] = 0x00000400 (MMIO base)
-addi x3, x0, 0 // Atribuicao de 0 ao timer
-addi x4, x0, 0xF // Estado anterior do botao (ativo em alto)
-sw x3, 12(x1) //Apaga todos os leds verdes
-
-LOOP:
-    //Leitura do estado dos botoes
-   
-    lw x2, 4(x1) // x2 = KEY[3:0] (addr 0x404)
-    //Tratamento de estado
-    xori x5, x2, 0xF // Inverte o estado do botao de 1 para 0
-    and x5, x5, x4 // Compara o estado do botao atual ao anterior
-
-//Verificacao de qual botao foi pressionado
-KEY0:
-    andi x6, x5, 1 // Isola o Botao 0 (0001), and 1 mantem o valor do bit atual
-    beq x6, x0, KEY1 // Desvio caso botao nao seja ativo
-    beq x0, x0, INIT // Desvio caso botao ativo - Reseta tudo no Init
-
-KEY1:
-    andi x6, x5, 2 // Isola o Botao 1 (0010), and 2 mantem o valor do bit atual
-    beq x6, x0, KEY2 // Desvio caso botao nao seja ativo
-    add x3, x0, x0 // Desvio caso botao ativo - Zera o timer
-
-KEY2:
-    andi x6, x5, 4 // Isola o Botao 2 (0100), and 4 mantem o valor do bit atual
-    beq x6, x0, KEY3 // Desvio caso botao nao seja ativo
-    addi x3, x3, -1 // Desvio caso botao ativo - Decrementa o timer
-
-KEY3:
-    andi x6, x5, 8 // Isola o Botao 3 (1000), and 8 mantem o valor do bit atual
-    beq x6, x0, LED_UPDATE // Desvio caso botao nao seja ativo
-    addi x3, x3, 1 // Desvio caso botao ativo - Incrementa timer
-
-LED_UPDATE:
-    sw x3, 12(x1) // LEDG (addr 0x40C)
-    add x4, x2, x0 // Salva o estado atual no estado anterior
-
-beq x0,x0,LOOP 
+lw x1,0(x0)
+lw x7,4(x0)
+add x8,x7,x7
+add x9,x8,x8
+add x10,x9,x9
+add x11,x10,x9
+add x11,x11,x8
+add x11,x11,x7
+add x3,x0,x0
+add x4,x11,x0
+sw x3,12(x1)
+lw x2,4(x1)
+add x5,x2,x11
+and x6,x2,x11
+add x6,x6,x6
+sub x5,x5,x6
+and x5,x5,x4
+and x6,x5,x7
+beq x6,x0,8
+beq x0,x0,-76
+and x6,x5,x8
+beq x6,x0,8
+add x3,x0,x0
+and x6,x5,x9
+beq x6,x0,8
+sub x3,x3,x7
+and x6,x5,x10
+beq x6,x0,8
+add x3,x3,x7
+sw x3,12(x1)
+add x4,x2,x0
+beq x0,x0,-80
