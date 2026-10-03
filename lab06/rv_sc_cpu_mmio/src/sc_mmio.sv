@@ -62,6 +62,8 @@ module sc_mmio (
     logic [7:0] rx_data;    // last received byte (held)
     logic       rx_valid;   // one-cycle pulse on new byte
 
+    logic [7:0]  tx_byte;       // current byte delivered to the UART (declared before use)
+
     sc_uart #(
         .CLK_HZ (10_000_000),
         .BAUD   (9_600)
@@ -88,7 +90,6 @@ module sc_mmio (
     logic [31:0] tx_word;       // latched 32-bit word being transmitted
     logic [1:0]  tx_byte_idx;   // current byte index (0 = LSB, 3 = MSB)
     logic        tx_word_busy;  // high while bytes remain to be sent
-    logic [7:0]  tx_byte;       // current byte delivered to the UART
 
     always_comb begin
         case (tx_byte_idx)
