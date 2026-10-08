@@ -10,3 +10,4 @@ add x7,x1,x2
 beq x1,x5,8
 add x8,x0,x0
 add x8,x1,x4
+beq x0,x0,0
