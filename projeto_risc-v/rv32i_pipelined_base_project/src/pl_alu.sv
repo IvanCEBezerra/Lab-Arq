@@ -10,9 +10,9 @@
 //   4'd05 : AND  -- E bit a bit
 //   4'd06 : SLL  -- shift-left-logical deslocamento logico a esquerda
 //   4'd07 : SRL  -- shift-right-logical deslocamento logico a direita
-//   4'd08 : SRA  -- shift-right-arithmetic deslocamento arimtetico a direita
+//   4'd08 : SRA  -- shift-right-arithmetic deslocamento aritmetico a direita
 //   4'd11 : SLT  -- set-less-than com sinal
-//   4'd12 : SLTU  -- set-less-than-unsigned sem sinal
+//   4'd12 : SLTU -- set-less-than-unsigned sem sinal
 // =============================================================================
 
 `timescale 1ns / 1ps
@@ -41,7 +41,7 @@ localparam [3:0] ALU_SLTU = 4'd12;
         case (Operation)
             ALU_ADD:   ALUResult = $signed(SrcA) + $signed(SrcB);
             ALU_SUB:   ALUResult = $signed(SrcA) - $signed(SrcB);
-            ALU_XOR:   ALUResult = SrcA ^SrcB;
+            ALU_XOR:   ALUResult = SrcA ^ SrcB;
             ALU_OR:    ALUResult = SrcA | SrcB;
             ALU_AND:   ALUResult = SrcA & SrcB;
             ALU_SLL:   ALUResult = SrcA << SrcB[4:0];
@@ -49,7 +49,7 @@ localparam [3:0] ALU_SLTU = 4'd12;
             ALU_SRA:   ALUResult = $signed(SrcA) >>> SrcB[4:0];
             ALU_SLT:   ALUResult = 32'($signed(SrcA) < $signed(SrcB));
             ALU_SLTU:  ALUResult = 32'(SrcA < SrcB);
-            default: ALUResult = 32'b0;
+            default:   ALUResult = 32'b0;
         endcase
     end
 
