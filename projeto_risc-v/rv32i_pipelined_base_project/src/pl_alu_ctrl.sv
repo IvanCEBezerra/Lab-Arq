@@ -4,10 +4,10 @@
 //
 // Entradas (do estagio EX -- registrador ID/EX):
 //   ALUOp[1:0] : codigo do controlador principal
-//     2'b00 : Load/Store  -> forcar ADD
-//     2'b01 : Branch BEQ  -> forcar SUB
-//     2'b10 : R-type      -> decodificar via Funct3/Funct7
-//     2'b11 : I-type      -> decodificar via Funct3/Funct7 (ADDI sempre ADD)
+//     2'b00 : Load/Store/LUI/AUIPC -> forcar ADD
+//     2'b01 : Branch BEQ           -> forcar SUB
+//     2'b10 : R-type               -> decodificar via Funct3/Funct7
+//     2'b11 : I-type               -> decodificar via Funct3/Funct7 (ADDI sempre ADD)
 //   Funct7[6:0], Funct3[2:0] : campos da instrucao
 //   Funct3: valores declarados em assembly.py
 // Saida Operation[3:0] -> pl_alu.sv:
@@ -38,7 +38,7 @@ localparam [3:0] ALU_SLTU = 4'd12;
 
     always_comb begin
         case (ALUOp)
-            2'b00: Operation = ALU_ADD;   // Load / Store -> ADD
+            2'b00: Operation = ALU_ADD;   // Load / Store / LUI / AUIPC -> ADD
 
             2'b01: Operation = ALU_SUB;   // Branch BEQ  -> SUB
 
