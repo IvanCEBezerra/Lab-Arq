@@ -29,6 +29,7 @@ module pl_datapath (
     input  logic        rst_n,
 
     // Sinais de controle vindos do estagio ID (pl_control)
+    input  logic [1:0]  ALUSrcA,
     input  logic        ALUSrc,
     input  logic        MemtoReg,
     input  logic        RegWrite,
@@ -88,7 +89,7 @@ module pl_datapath (
 
     // EX -- forwarding
     logic [1:0]  fwd_a, fwd_b;
-    logic [31:0] fwd_srca, fwd_srcb, alu_srcb;
+    logic [31:0] fwd_srca, fwd_srcb, alu_srca, alu_srcb;
     logic [31:0] alu_result;
     logic        zero;
 
@@ -179,6 +180,7 @@ module pl_datapath (
     // =========================================================================
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin                      // reset assicrono (unico sinal na lista)
+            id_ex.alu_src_a  <= 2'b00;
             id_ex.alu_src    <= 1'b0;
             id_ex.mem_to_reg <= 1'b0;
             id_ex.reg_write  <= 1'b0;
@@ -196,6 +198,7 @@ module pl_datapath (
             id_ex.funct3     <= 3'b0;
             id_ex.funct7     <= 7'b0;
         end else if (stall || pc_src) begin    // NOP sincrono: load-use ou branch
+            id_ex.alu_src_a  <= 2'b00;
             id_ex.alu_src    <= 1'b0;
             id_ex.mem_to_reg <= 1'b0;
             id_ex.reg_write  <= 1'b0;
@@ -213,6 +216,7 @@ module pl_datapath (
             id_ex.funct3     <= 3'b0;
             id_ex.funct7     <= 7'b0;
         end else begin
+            id_ex.alu_src_a  <= ALUSrcA;
             id_ex.alu_src    <= ALUSrc;
             id_ex.mem_to_reg <= MemtoReg;
             id_ex.reg_write  <= RegWrite;
@@ -260,6 +264,15 @@ module pl_datapath (
         endcase
     end
 
+    // Mux ALUSrcA: registrador (com forwarding), PC (AUIPC) ou zero (LUI)
+    always_comb begin
+        case (id_ex.alu_src_a)
+            2'b01:   alu_srca = id_ex.pc;
+            2'b10:   alu_srca = 32'b0;
+            default: alu_srca = fwd_srca;
+        endcase
+    end
+
     // Mux de forwarding para SrcB (antes do mux ALUSrc)
     always_comb begin
         case (fwd_b)
@@ -273,7 +286,7 @@ module pl_datapath (
     assign alu_srcb = id_ex.alu_src ? id_ex.imm_ext : fwd_srcb;
 
     pl_alu alu (
-        .SrcA      (fwd_srca),
+        .SrcA      (alu_srca),
         .SrcB      (alu_srcb),
         .Operation (ALU_CC),
         .ALUResult (alu_result),
