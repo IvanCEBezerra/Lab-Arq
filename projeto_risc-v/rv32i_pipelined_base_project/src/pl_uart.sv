@@ -28,7 +28,7 @@
 `timescale 1ns / 1ps
 
 module pl_uart #(
-    parameter int CLK_HZ = 50_000_000,
+    parameter int CLK_HZ = 10_000_000,
     parameter int BAUD   =      9_600
 ) (
     input  logic       clk,
