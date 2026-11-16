@@ -1,30 +1,19 @@
-Já feito
-Etapas 1 e 2 validadas na placa (R-type, I-type, LUI, AUIPC).
+# Estado do projeto
 
-Etapa 3: RTL integrado e testes Icarus concluídos para branches, jumps, loads e stores.
-Simulação integrada no ModelSim Intel FPGA 2020.1 validada pelo usuário: etapa03_tb PASS, 0 erros e 0 avisos (16/11/2026).
-Pendente: compilar no Quartus, conferir timing e validar dump na placa.
-Branches: BNE, BLT, BGE, BLTU, BGEU
-Decodificar funct3 no estágio EX.
-Trocar o teste zero por uma condição de comparação (igual, menor com sinal, menor sem sinal).
-Manter o flush de 2 ciclos.
-JAL e JALR
-Adicionar o imediato J-type no pl_sign_ext.
-Calcular o alvo: JAL = PC+imm; JALR = (rs1 adiantado + imm) com o bit 0 zerado.
-Gravar PC+4 em rd.
-Gerar flush ao saltar.
-Loads: LB, LH, LBU, LHU
-Usar o funct3 em ex_mem e addr[1:0] para selecionar o byte ou a meia-palavra.
-Estender com sinal (LB, LH) ou com zero (LBU, LHU) antes do WB.
-Não mexer no caminho do MMIO, que continua por palavra.
-Stores: SB e SH
-Alinhar o dado ao offset.
-Dar escrita por byte na pl_dmem (máscara de bytes) apenas para a memória de dados.
-O MMIO continua só com SW.
-Teste
-.asm da Etapa 3: assembler/etapa03_test.asm; resultados em tests/etapa03_esperado.md.
-Simulação automatizada: tests/run_etapa03.py, tests/run_branches.py e tests/run_memory_test.sh.
-Teste ModelSim da etapa 3 concluído via tests/etapa03_modelsim.do; usa etapa03_tb (não o golden.txt legado). Falta rodar na placa com dump.
-Entrega
-Relatório no repositório: arquitetura, mudanças por etapa, resultados dos dumps.
-Ensaiar a demo ao vivo e ter o .sof e os MIFs prontos.
+## Feito
+
+- [x] Etapas 1 e 2 (R-type, I-type aritmético, LUI e AUIPC): validadas na placa, conforme registro da equipe.
+- [x] Etapa 3 — branches `BNE`, `BLT`, `BGE`, `BLTU`, `BGEU`: condição selecionada por `funct3` em EX, comparação com/sem sinal e flush das duas instruções mais novas quando o desvio é tomado.
+- [x] Etapa 3 — `JAL` e `JALR`: imediato J, alvo correto (com forwarding de `rs1` e bit 0 zerado no JALR), gravação de PC+4 e flush.
+- [x] Etapa 3 — `LB`, `LH`, `LBU`, `LHU`, `SB`, `SH`: seleção e extensão de byte/meia-palavra, escrita com máscara de bytes na RAM e MMIO restrito a LW/SW por palavra.
+- [x] Testes em Icarus: casos de branches, memória, saltos, regressão da base e programa integrado. Arquivos em `rv32i_pipelined_base_project/tests/`.
+- [x] Programa `assembler/etapa03_test.asm`, resultados esperados em `tests/etapa03_esperado.md` e imagens da placa em `mifs/etapa03_fpga/` (caminhos relativos a `rv32i_pipelined_base_project/`).
+- [x] Simulação integrada no ModelSim Intel FPGA 2020.1: `tests/etapa03_modelsim.do` / `etapa03_tb` com PASS, 0 erros e 0 avisos, conforme log enviado pela equipe em 16/11/2026. O `golden.txt` legado não é usado nesse teste.
+
+## A fazer
+
+- [ ] Configurar o projeto Quartus da DE2-115 para `pl_top.sv` e EP4CE115F29C7; incluir fontes, pinos, `quartus/pl_top.sdc` e os MIFs da etapa 3 nos caminhos esperados. Compilar e conferir inicialização da RAM e timing.
+- [ ] Gravar o `.sof` na FPGA, capturar os 164 bytes pela UART a 9600 baud com `dump/serial_dump.py` e comparar registradores x1–x8 e RAM com `tests/etapa03_esperado.md`. Só então declarar a etapa 3 validada na placa.
+- [ ] Perguntar ao professor sobre o comportamento de acessos desalinhados e destinos de salto desalinhados (`instructions/duvidas.md`); os testes atuais usam acessos naturalmente alinhados.
+- [ ] Concluir o relatório no repositório: arquitetura, mudanças por etapa e resultados reais da simulação e do dump físico.
+- [ ] Preparar o `.sof`, os MIFs e o roteiro da demonstração ao vivo; ensaiar a apresentação na placa.
