@@ -38,14 +38,18 @@ module pl_control (
     output logic       MemRead,
     output logic       MemWrite,
     output logic       Branch,
+    output logic       Jump,
+    output logic       Jalr,
     output logic [1:0] ALUOp
 );
 
     localparam R_TYPE = 7'b0110011;
     localparam I_TYPE = 7'b0010011; // ADDI, ANDI, ORI, SLTI, SLLI, SRLI, SRAI
-    localparam LOAD   = 7'b0000011; // LW
-    localparam STORE  = 7'b0100011; // SW
-    localparam BRANCH = 7'b1100011; // BEQ
+    localparam LOAD   = 7'b0000011; // LB, LH, LW, LBU, LHU
+    localparam STORE  = 7'b0100011; // SB, SH, SW
+    localparam BRANCH = 7'b1100011; // BEQ, BNE, BLT, BGE, BLTU, BGEU
+    localparam JALR   = 7'b1100111; // JALR
+    localparam JAL    = 7'b1101111; // JAL
     localparam LUI    = 7'b0110111; // LUI
     localparam AUIPC  = 7'b0010111; // AUIPC
 
@@ -57,6 +61,8 @@ module pl_control (
         MemRead  = 1'b0;
         MemWrite = 1'b0;
         Branch   = 1'b0;
+        Jump     = 1'b0;
+        Jalr     = 1'b0;
         ALUOp    = 2'b00;
 
         case (Opcode)
@@ -92,6 +98,24 @@ module pl_control (
                 ALUSrcA  = 2'b00;
                 Branch   = 1'b1;
                 ALUOp    = 2'b01;
+            end
+            JAL: begin
+                ALUSrcA  = 2'b00;
+                ALUSrc   = 1'b1;
+                MemtoReg = 1'b0;
+                RegWrite = 1'b1;
+                Jump     = 1'b1;
+                Jalr     = 1'b0;
+                ALUOp    = 2'b00;
+            end
+            JALR: begin
+                ALUSrcA  = 2'b00;
+                ALUSrc   = 1'b1;
+                MemtoReg = 1'b0;
+                RegWrite = 1'b1;
+                Jump     = 1'b1;
+                Jalr     = 1'b1;
+                ALUOp    = 2'b00; // ALU calcula rs1 + imm_ext
             end
             LUI: begin
                 ALUSrcA  = 2'b10; // seleciona constante 0 na entrada SrcA
