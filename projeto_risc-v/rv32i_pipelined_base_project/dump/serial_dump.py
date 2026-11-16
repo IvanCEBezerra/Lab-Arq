@@ -33,10 +33,7 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
-try:
-    import serial
-except ImportError:
-    sys.exit("Erro: pyserial nao encontrado. Execute: pip install pyserial")
+# pyserial is required only for live capture; offline comparison needs stdlib only.
 
 # ---------------------------------------------------------------------------
 # Debug — altere para False para desativar
@@ -93,11 +90,16 @@ def receive_dump(port: str, baud: int, timeout: float) -> bytes:
     sys.exit() ser chamado em main(), garantindo a liberação do handle
     do sistema operacional em qualquer cenário de saída.
     """
-    print(f"Aguardando dados em {port} @ {baud} baud ...")
-    print(f"Esperando {TOTAL_WORDS} palavras ({TOTAL_BYTES} bytes)\n")
-
+    try:
+        import serial
+    except ImportError as exc:
+        raise RuntimeError("pyserial ausente; instale com python3 -m pip install pyserial") from exc
     ser = serial.Serial(port, baud, timeout=timeout)
     try:
+        # Discard bytes left by a previous run; press/release KEY[0] only now.
+        ser.reset_input_buffer()
+        print(f"Aguardando dados em {port} @ {baud} baud ...", flush=True)
+        print(f"Esperando {TOTAL_WORDS} palavras ({TOTAL_BYTES} bytes)\n", flush=True)
         data = bytearray()
         last_reported_word = -1
 
@@ -130,6 +132,7 @@ def debug_hex_monitor(port: str, baud: int) -> None:
     Modo monitor: imprime em hex todos os bytes recebidos na serial.
     Pressione 'q' para encerrar.
     """
+    import serial
     stop = threading.Event()
 
     def _wait_q() -> None:
@@ -204,6 +207,8 @@ def parse_dump(data: bytes) -> dict:
     Cada palavra foi transmitida pelo hardware UART como 4 bytes little-endian
     a partir de uma única instrução SW no FPGA.
     """
+    if len(data) != TOTAL_BYTES:
+        raise ValueError(f"Dump deve conter exatamente {TOTAL_BYTES} bytes; recebidos {len(data)}")
     cycle = struct.unpack_from("<I", data, CYCLE_OFFSET)[0]
 
     regs = {}
@@ -217,6 +222,28 @@ def parse_dump(data: bytes) -> dict:
         mem.append(struct.unpack_from("<I", data, offset)[0])
 
     return {"cycle": cycle, "regs": regs, "mem": mem}
+
+
+# Reference for assembler/etapa03_test.asm, tests/etapa03_esperado.md and
+# mifs/etapa03_fpga/data.mif (32 initial zero words). This is NOT board evidence.
+ETAPA03_REGS = (0xFFFFFFFF, 0xFFFFFFFF, 0x000000FF, 0x00000080,
+                0xFFFF80FF, 0x000080FF, 0x008080FF, 0x0000005C)
+ETAPA03_MEM = (0x008080FF, 0x0000005C, 0x00000070, 0x00000007,
+               0x008080FF) + (0,) * 27
+
+
+def compare_etapa03(parsed: dict) -> list[str]:
+    """Compare all transmitted register/RAM words; cycle count is variable."""
+    mismatches = []
+    for i, expected in enumerate(ETAPA03_REGS, 1):
+        actual = parsed["regs"][i]
+        if actual != expected:
+            mismatches.append(f"x{i}: esperado 0x{expected:08X}, recebido 0x{actual:08X}")
+    for i, expected in enumerate(ETAPA03_MEM):
+        actual = parsed["mem"][i]
+        if actual != expected:
+            mismatches.append(f"RAM 0x{i*4:03X}: esperado 0x{expected:08X}, recebido 0x{actual:08X}")
+    return mismatches
 
 
 # ---------------------------------------------------------------------------
@@ -281,9 +308,8 @@ def main() -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent("""\
             Exemplos:
-              python serial_dump.py COM3
-              python serial_dump.py /dev/ttyUSB0 --baud 115200
-              python serial_dump.py COM3 --out meu_dump.txt
+              python serial_dump.py /dev/ttyUSB0 --baud 9600 --raw-out captura.bin --check-etapa03 --out captura.txt
+              python serial_dump.py --input captura.bin --check-etapa03 --out conferencia.txt
 
             Protocolo:
               O FPGA transmite 41 palavras de 32 bits (164 bytes) via UART MMIO.
@@ -293,8 +319,8 @@ def main() -> None:
               + mem[0x000-0x07C] (32 palavras).
         """),
     )
-    parser.add_argument("port",
-                        help="Porta serial (ex: COM3, /dev/ttyUSB0)")
+    parser.add_argument("port", nargs="?",
+                        help="Porta serial (ex: COM3, /dev/ttyUSB0); omitida com --input")
     parser.add_argument("--baud",    type=int,   default=9600,
                         help="Baud rate (padrao: 9600)")
     parser.add_argument("--timeout", type=float, default=10.0,
@@ -303,34 +329,66 @@ def main() -> None:
                              "41 palavras = ~164 ms no total.")
     parser.add_argument("--out",                 default="dump.txt",
                         help="Arquivo de saida (padrao: dump.txt)")
+    parser.add_argument("--raw-out", type=Path,
+                        help="Captura binaria sem perda (164 bytes); exclusivo, nao sobrescreve")
+    parser.add_argument("--input", type=Path,
+                        help="Arquivo binario de 164 bytes para comparacao offline (sem pyserial)")
+    parser.add_argument("--check-etapa03", action="store_true",
+                        help="Confere x1-x8 e todas as 32 palavras RAM da etapa 3")
     args = parser.parse_args()
+
+    if (args.input is None) == (args.port is None):
+        parser.error("informe uma porta serial OU --input, nao ambos")
+    if args.input is not None and args.raw_out is not None:
+        parser.error("--raw-out so e permitido com porta serial")
+    if args.port is not None and args.raw_out is None:
+        parser.error("captura fisica exige --raw-out para guardar os 164 bytes originais")
+    report_path = Path(args.out).resolve()
+    capture_path = args.input if args.input is not None else args.raw_out
+    if capture_path is not None and report_path == capture_path.resolve():
+        parser.error("--out e --input/--raw-out nao podem apontar para o mesmo arquivo")
 
     if DEBUG_HEX:
         try:
+            assert args.port is not None
             debug_hex_monitor(args.port, args.baud)
         except KeyboardInterrupt:
             pass
         return
 
     try:
-        raw = receive_dump(args.port, args.baud, args.timeout)
-    except _SerialTimeout as e:
-        # Porta já fechada pelo finally de receive_dump antes de chegar aqui.
-        sys.exit(str(e))
+        if args.input is not None:
+            raw = args.input.read_bytes()
+        else:
+            assert args.port is not None and args.raw_out is not None
+            if args.raw_out.exists():
+                raise FileExistsError(f"{args.raw_out}: captura existente; escolha outro nome")
+            raw = receive_dump(args.port, args.baud, args.timeout)
+            with args.raw_out.open("xb") as output:
+                output.write(raw)
+            print(f"Captura binaria salva em: {args.raw_out.resolve()}")
+        parsed = parse_dump(raw)
+    except (OSError, ValueError, _SerialTimeout, RuntimeError) as e:
+        sys.exit(f"Erro: {e}")
     except KeyboardInterrupt:
-        print("\nInterrompido pelo usuario.")
-        sys.exit(1)
-
-    parsed = parse_dump(raw)
+        sys.exit("Interrompido pelo usuario.")
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     report    = format_report(parsed, timestamp)
+    mismatches = compare_etapa03(parsed) if args.check_etapa03 else []
+    if args.check_etapa03:
+        verdict = (f"FAIL etapa 3: {len(mismatches)} divergencia(s):\n  "
+                   + "\n  ".join(mismatches)) if mismatches else (
+                       "PASS etapa 3: x1-x8 e 32 palavras RAM conferem (ciclos variaveis).")
+        report += "\n" + verdict + "\n"
 
     print(report)
 
     out_path = Path(args.out)
     out_path.write_text(report, encoding="utf-8")
     print(f"\nDump salvo em: {out_path.resolve()}")
+    if mismatches:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

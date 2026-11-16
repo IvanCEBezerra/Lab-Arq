@@ -12,6 +12,8 @@
 
 ## A fazer
 
+Preparação concluída, sem validação física: projeto `quartus/pl_top.qpf`, MIFs e checagem estática (`quartus/check_project.py`); comparação offline e roteiro UART (`dump/serial_dump.py`, `dump/DEMO_ETAPA03.md`); rascunho técnico `instructions/relatorio.md` e perguntas em `instructions/duvidas.md`. A compilação/timing no Quartus, a gravação/captura na placa, a resposta do professor e o ensaio ainda não foram realizados; por isso as tarefas abaixo permanecem abertas.
+
 - [ ] Configurar o projeto Quartus da DE2-115 para `pl_top.sv` e EP4CE115F29C7; incluir fontes, pinos, `quartus/pl_top.sdc` e os MIFs da etapa 3 nos caminhos esperados. Compilar e conferir inicialização da RAM e timing.
 - [ ] Gravar o `.sof` na FPGA, capturar os 164 bytes pela UART a 9600 baud com `dump/serial_dump.py` e comparar registradores x1–x8 e RAM com `tests/etapa03_esperado.md`. Só então declarar a etapa 3 validada na placa.
 - [ ] Perguntar ao professor sobre o comportamento de acessos desalinhados e destinos de salto desalinhados (`instructions/duvidas.md`); os testes atuais usam acessos naturalmente alinhados.
