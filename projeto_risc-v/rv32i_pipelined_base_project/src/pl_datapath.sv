@@ -361,27 +361,6 @@ module pl_datapath (
         endcase
     end
 
-    logic [3:0]  dmem_byte_en;
-    logic [31:0] dmem_wd;
-
-    // Alinhamento e mascara de bytes para Stores (SB, SH, SW)
-    always_comb begin
-        case (ex_mem.funct3)
-            3'b000: begin // SB
-                dmem_byte_en = 4'b0001 << ex_mem.alu_result[1:0];
-                dmem_wd      = {4{ex_mem.write_data[7:0]}};
-            end
-            3'b001: begin // SH
-                dmem_byte_en = ex_mem.alu_result[1] ? 4'b1100 : 4'b0011;
-                dmem_wd      = {2{ex_mem.write_data[15:0]}};
-            end
-            default: begin // SW (3'b010)
-                dmem_byte_en = 4'b1111;
-                dmem_wd      = ex_mem.write_data;
-            end
-        endcase
-    end
-
     pl_dmem dmem (
         .clk       (clk),
         .MemWrite  (ex_mem.mem_write & ~mmio_sel),
