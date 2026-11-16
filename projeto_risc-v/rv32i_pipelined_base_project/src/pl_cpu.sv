@@ -47,6 +47,7 @@ module pl_cpu (
 
     logic [1:0] ALUSrcA;
     logic       ALUSrc, MemtoReg, RegWrite, MemRead, MemWrite, Branch;
+    logic [1:0] Jump;
     logic [1:0] ALUOp;
 
     logic [2:0] funct3_ex;
@@ -66,6 +67,7 @@ module pl_cpu (
         .MemRead  (MemRead),
         .MemWrite (MemWrite),
         .Branch   (Branch),
+        .Jump     (Jump),
         .ALUOp    (ALUOp)
     );
 
@@ -92,6 +94,7 @@ module pl_cpu (
         .MemRead      (MemRead),
         .MemWrite     (MemWrite),
         .Branch       (Branch),
+        .Jump         (Jump),
         .ALUOp        (ALUOp),
         .ALU_CC       (alu_cc),
         .Opcode       (opcode),

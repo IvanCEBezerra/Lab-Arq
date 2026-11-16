@@ -16,6 +16,7 @@
 module pl_dmem (
     input  logic        clk,
     input  logic        MemWrite,
+    input  logic [3:0]  ByteEnable,
     input  logic [7:0]  addr,
     input  logic [31:0] WriteData,
     output logic [31:0] ReadData
@@ -30,8 +31,13 @@ module pl_dmem (
     end
     // synthesis translate_on
 
-    always@(posedge clk) begin
-        if (MemWrite) ram[addr] <= WriteData;
+    always @(posedge clk) begin
+        if (MemWrite) begin
+            for (int lane = 0; lane < 4; lane++) begin
+                if (ByteEnable[lane])
+                    ram[addr][8*lane +: 8] <= WriteData[8*lane +: 8];
+            end
+        end
     end
 
     assign ReadData = ram[addr];

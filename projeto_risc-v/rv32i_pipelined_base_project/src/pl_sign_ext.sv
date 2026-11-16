@@ -24,10 +24,13 @@ module pl_sign_ext (
     localparam BRANCH = 7'b1100011; // BEQ
     localparam LUI    = 7'b0110111; // LUI
     localparam AUIPC  = 7'b0010111; // AUIPC
+    localparam JAL    = 7'b1101111;
+    localparam JALR   = 7'b1100111;
 
     always_comb begin
         case (Instr[6:0])
             I_TYPE,
+            JALR,
             LOAD:   ImmExt = {{20{Instr[31]}}, Instr[31:20]};
 
             STORE:  ImmExt = {{20{Instr[31]}}, Instr[31:25], Instr[11:7]};
@@ -37,6 +40,9 @@ module pl_sign_ext (
 
             LUI,
             AUIPC:  ImmExt = {Instr[31:12], 12'b0};
+
+            JAL:    ImmExt = {{11{Instr[31]}}, Instr[31], Instr[19:12],
+                              Instr[20], Instr[30:21], 1'b0};
 
             default: ImmExt = 32'b0;
         endcase
