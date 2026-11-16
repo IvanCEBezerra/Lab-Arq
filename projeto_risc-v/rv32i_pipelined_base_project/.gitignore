@@ -9,3 +9,5 @@ modelsim/*
 assembler/*
 !assembler/assembler.py
 !assembler/hello.asm
+!assembler/etapa01_test.asm
+!assembler/etapa03_test.asm

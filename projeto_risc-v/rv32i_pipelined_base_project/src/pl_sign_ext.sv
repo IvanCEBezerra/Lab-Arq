@@ -30,8 +30,8 @@ module pl_sign_ext (
     always_comb begin
         case (Instr[6:0])
             I_TYPE,
-            LOAD,
-            JALR:   ImmExt = {{20{Instr[31]}}, Instr[31:20]};
+            JALR,
+            LOAD:   ImmExt = {{20{Instr[31]}}, Instr[31:20]};
 
             STORE:  ImmExt = {{20{Instr[31]}}, Instr[31:25], Instr[11:7]};
 
@@ -43,6 +43,9 @@ module pl_sign_ext (
 
             LUI,
             AUIPC:  ImmExt = {Instr[31:12], 12'b0};
+
+            JAL:    ImmExt = {{11{Instr[31]}}, Instr[31], Instr[19:12],
+                              Instr[20], Instr[30:21], 1'b0};
 
             default: ImmExt = 32'b0;
         endcase

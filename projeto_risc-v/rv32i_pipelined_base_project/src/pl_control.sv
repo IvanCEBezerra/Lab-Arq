@@ -38,8 +38,7 @@ module pl_control (
     output logic       MemRead,
     output logic       MemWrite,
     output logic       Branch,
-    output logic       Jump,
-    output logic       Jalr,
+    output logic [1:0] Jump,
     output logic [1:0] ALUOp
 );
 
@@ -61,8 +60,7 @@ module pl_control (
         MemRead  = 1'b0;
         MemWrite = 1'b0;
         Branch   = 1'b0;
-        Jump     = 1'b0;
-        Jalr     = 1'b0;
+        Jump     = 2'b00;
         ALUOp    = 2'b00;
 
         case (Opcode)
@@ -99,24 +97,6 @@ module pl_control (
                 Branch   = 1'b1;
                 ALUOp    = 2'b01;
             end
-            JAL: begin
-                ALUSrcA  = 2'b00;
-                ALUSrc   = 1'b1;
-                MemtoReg = 1'b0;
-                RegWrite = 1'b1;
-                Jump     = 1'b1;
-                Jalr     = 1'b0;
-                ALUOp    = 2'b00;
-            end
-            JALR: begin
-                ALUSrcA  = 2'b00;
-                ALUSrc   = 1'b1;
-                MemtoReg = 1'b0;
-                RegWrite = 1'b1;
-                Jump     = 1'b1;
-                Jalr     = 1'b1;
-                ALUOp    = 2'b00; // ALU calcula rs1 + imm_ext
-            end
             LUI: begin
                 ALUSrcA  = 2'b10; // seleciona constante 0 na entrada SrcA
                 ALUSrc   = 1'b1;  // seleciona ImmExt na entrada SrcB
@@ -130,6 +110,14 @@ module pl_control (
                 MemtoReg = 1'b0;  // dado escrito em rd vem da ALU
                 RegWrite = 1'b1;  // habilita escrita em rd
                 ALUOp    = 2'b00; // operacao ADD: PC + ImmExt
+            end
+            JAL: begin
+                Jump     = 2'b01;
+                RegWrite = 1'b1;
+            end
+            JALR: begin
+                Jump     = 2'b10;
+                RegWrite = 1'b1;
             end
             default: ; // sinais permanecem em zero (seguro)
         endcase
