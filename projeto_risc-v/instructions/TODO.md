@@ -2,7 +2,8 @@ Já feito
 Etapas 1 e 2 validadas na placa (R-type, I-type, LUI, AUIPC).
 
 Etapa 3: RTL integrado e testes Icarus concluídos para branches, jumps, loads e stores.
-Pendente: reproduzir no ModelSim, compilar no Quartus e validar dump na placa.
+Simulação integrada no ModelSim Intel FPGA 2020.1 validada pelo usuário: etapa03_tb PASS, 0 erros e 0 avisos (16/11/2026).
+Pendente: compilar no Quartus, conferir timing e validar dump na placa.
 Branches: BNE, BLT, BGE, BLTU, BGEU
 Decodificar funct3 no estágio EX.
 Trocar o teste zero por uma condição de comparação (igual, menor com sinal, menor sem sinal).
@@ -23,7 +24,7 @@ O MMIO continua só com SW.
 Teste
 .asm da Etapa 3: assembler/etapa03_test.asm; resultados em tests/etapa03_esperado.md.
 Simulação automatizada: tests/run_etapa03.py, tests/run_branches.py e tests/run_memory_test.sh.
-Rodar no ModelSim (atualizar golden.txt) e depois na placa, com dump.
+Teste ModelSim da etapa 3 concluído via tests/etapa03_modelsim.do; usa etapa03_tb (não o golden.txt legado). Falta rodar na placa com dump.
 Entrega
 Relatório no repositório: arquitetura, mudanças por etapa, resultados dos dumps.
 Ensaiar a demo ao vivo e ter o .sof e os MIFs prontos.
