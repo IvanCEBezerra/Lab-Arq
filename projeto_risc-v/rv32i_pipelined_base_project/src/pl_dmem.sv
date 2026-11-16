@@ -3,8 +3,8 @@
 // Memoria de dados -- RV32I pipelined
 //
 // Capacidade : 256 palavras x 32 bits = 1 KB
-// Init file  : data.mif   (sintese Quartus)
-//              data.hex   (simulacao ModelSim via $readmemh)
+// Init file  : data.mif   (atributo Quartus)
+//              data.hex   (simulacao e sintese via $readmemh)
 //
 // Leitura  : assincrona (combinatorial) -- disponivel no estagio MEM
 // Escrita  : sincrona (posedge clk, gated por MemWrite & ~mmio_sel)
@@ -24,12 +24,10 @@ module pl_dmem (
 
     (* ram_init_file = "data.mif" *) logic [31:0] ram [0:255];
 
-    // synthesis translate_off
     initial begin
         for (int i = 0; i < 256; i++) ram[i] = 32'h00000000;
         $readmemh("data.hex", ram);
     end
-    // synthesis translate_on
 
     always @(posedge clk) begin
         if (MemWrite) begin

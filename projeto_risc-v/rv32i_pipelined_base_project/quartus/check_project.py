@@ -88,13 +88,17 @@ def main():
     for name in ("instruction.mif", "data.mif"):
         words = mif(HERE / name)
         check((HERE / name).read_bytes() == (HERE.parent / "mifs" / "etapa03_fpga" / name).read_bytes(), f"MIF etapa 3 diferente: {name}")
+        hex_name = "program.hex" if name == "instruction.mif" else "data.hex"
+        lines = (HERE / hex_name).read_text(encoding="utf-8").splitlines()
+        check(len(lines) == 256 and all(re.fullmatch(r"[0-9a-fA-F]{8}", line) for line in lines), f"{hex_name}: esperado 256 palavras hexadecimais de 32 bits")
+        check([int(line, 16) for line in lines] == [words[i] for i in range(256)], f"{hex_name}: diferente de {name}")
         print(f"{name}: 256 palavras x 32 bits, copia identica da etapa 3")
     if shutil.which("tclsh"):
         script = "proc set_global_assignment {args} {}\nproc set_location_assignment {args} {}\nproc set_instance_assignment {args} {}\nsource pl_top.qsf\nputs QSF_TCL_OK\n"
         result = subprocess.run(["tclsh"], cwd=HERE, input=script, text=True, capture_output=True, check=True)
         check("QSF_TCL_OK" in result.stdout and not result.stderr, f"Tcl QSF: {result.stdout} {result.stderr}")
         print("QSF: sintaxe Tcl validada com tclsh")
-    print(f"OK: {len(sources)} fontes, {len(pins)} pinos, SDC, I/O standards e MIFs (somente verificacao estatica)")
+    print(f"OK: {len(sources)} fontes, {len(pins)} pinos, SDC, I/O standards, MIFs e HEXs (somente verificacao estatica)")
 
 
 if __name__ == "__main__":
