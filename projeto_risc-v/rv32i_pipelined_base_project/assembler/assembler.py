@@ -530,7 +530,9 @@ def translate_instruction(instruction):
 			rs1 = bin(int(rs1[1:]))[2:].zfill(5)
 
 			shamt = instruction.split(" ")[1].split(",")[2]
-			shamt = sfill(sbin(shamt)[0:6], 5)
+			if not 0 <= int(shamt) <= 31:
+				raise Exception("Shift amount out of range (0..31).")
+			shamt = f"{int(shamt):05b}"
 
 			binary = funct7 + shamt + rs1 + funct3 + rd + opcode
 

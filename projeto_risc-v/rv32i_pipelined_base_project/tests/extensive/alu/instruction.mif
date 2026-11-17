@@ -1,0 +1,39 @@
+DEPTH = 256;            -- The size of memory in words
+WIDTH = 32;             -- The size of data in bits
+ADDRESS_RADIX = HEX;    -- The radix for address values
+DATA_RADIX = HEX;       -- The radix for data values
+CONTENT                 -- Start of (address: data pairs)
+BEGIN
+
+000 : FFF00093;  -- addi x1,x0,-1
+001 : 01F00113;  -- addi x2,x0,31
+002 : 002091B3;  -- sll x3,x1,x2
+003 : 0021D233;  -- srl x4,x3,x2
+004 : 4021D2B3;  -- sra x5,x3,x2
+005 : 0020A333;  -- slt x6,x1,x2
+006 : 0020B3B3;  -- sltu x7,x1,x2
+007 : 0030C433;  -- xor x8,x1,x3
+008 : 004404B3;  -- add x9,x8,x4
+009 : 40220533;  -- sub x10,x4,x2
+00A : 003475B3;  -- and x11,x8,x3
+00B : 00346633;  -- or x12,x8,x3
+00C : 002216B3;  -- sll x13,x4,x2
+00D : 41F6D713;  -- srai x14,x13,31
+00E : 01F6D793;  -- srli x15,x13,31
+00F : 01F79813;  -- slli x16,x15,31
+010 : 0000A893;  -- slti x17,x1,0
+011 : FFF12913;  -- slti x18,x2,-1
+012 : 07F0F993;  -- andi x19,x1,127
+013 : 80106A13;  -- ori x20,x0,-2047
+014 : 80100A93;  -- addi x21,x0,-2047
+015 : FFFFFB37;  -- lui x22,-1
+016 : 00000B97;  -- auipc x23,0
+017 : 00500013;  -- addi x0,x0,5
+018 : 7FF00C13;  -- addi x24,x0,2047
+019 : 801C0C93;  -- addi x25,x24,-2047
+01A : 0011DD33;  -- srl x26,x3,x1
+01B : 4011DDB3;  -- sra x27,x3,x1
+01C : 019C0E33;  -- add x28,x24,x25
+01D : 00000063;  -- beq x0,x0,0
+[01E..0FF] : 00000013;  -- nop
+END;

@@ -1,0 +1,10 @@
+# Perguntas ao professor — desalinhamento (pendentes de envio/resposta)
+
+Contexto: a etapa 3 foi testada apenas com acessos naturalmente alinhados (`rv32i_pipelined_base_project/tests/pl_memory_tb.sv:1-2`; `tests/etapa03_esperado.md:1-3`). A RAM atual seleciona uma palavra por `endereço[9:2]`, com máscaras de byte internas à palavra; não há tratamento de exceção (`src/pl_datapath.sv:351-370,391-405`, caminhos `src/` relativos a `rv32i_pipelined_base_project/`). No manual, a política de loads/stores desalinhados depende do ambiente de execução; alvos de branch tomado/JAL/JALR desalinhados em RV32I base geram exceção (`instructions/manual.pdf`, cap. 2, §§2.2, 2.5–2.6, pp. 24, 31, 33–34).
+
+1. **RAM:** a avaliação incluirá `LH/LHU/SH` em endereço ímpar ou `LW/SW` fora de múltiplos de 4? Se sim, qual comportamento esperado: acesso completo (inclusive cruzando limite de palavra), exceção/falha sinalizada ou outra política especificada? Há distinção entre casos que permanecem na mesma palavra e os que cruzam palavras?
+2. **MMIO:** devem ser testados acessos de tamanho inferior a uma palavra ou `LW/SW` desalinhados na janela `0x400–0x7FF`? Se sim, qual comportamento observável exigido para periféricos com efeitos colaterais: ignorar, sinalizar erro ou realizar acesso?
+3. **Controle de fluxo:** em RV32I sem extensão C, a avaliação exigirá detectar e sinalizar exceção para destino `PC+2` em branch **tomado**, `JAL` ou `JALR` (depois de zerar o bit 0), ou bastará restringir os programas demonstrados a destinos múltiplos de 4? Um branch **não tomado** com alvo calculado `PC+2` será cobrado e deverá prosseguir sem exceção?
+4. **Escopo de exceções:** se a resposta às perguntas anteriores pedir sinalização, qual interface/efeito observável deve ser implementado neste processador didático, que hoje não possui controlador de traps? Solicita-se um exemplo mínimo de teste ou critério de correção.
+
+**Status:** perguntas preparadas; não enviadas por este agente. Nenhuma resposta ou decisão do professor foi registrada.

@@ -6,6 +6,8 @@ Processador RISC-V de 32 bits com pipeline de 5 estágios implementado em System
 
 ## Instruções suportadas
 
+**Legenda:** ✅ implementação presente e coberta pelo teste padrão; 🧪 implementação presente, mas ainda sem resultado verificado em simulação; ❌ não implementada. A presença de uma instrução no `assembler.py` não comprova suporte pela CPU.
+
 | # | Instrução | Tipo | Opcode  | Status |
 |---|-----------|------|---------|:------:|
 | 1 | `ADD`     | R    | 0110011 | ✅ |
@@ -16,31 +18,40 @@ Processador RISC-V de 32 bits com pipeline de 5 estágios implementado em System
 | 6 | `LW`      | I    | 0000011 | ✅ |
 | 7 | `SW`      | S    | 0100011 | ✅ |
 | 8 | `BEQ`     | B    | 1100011 | ✅ |
+| 9 | `XOR`     | R    | 0110011 | 🧪 |
+| 10 | `SLL`    | R    | 0110011 | 🧪 |
+| 11 | `SRL`    | R    | 0110011 | 🧪 |
+| 12 | `SRA`    | R    | 0110011 | 🧪 |
+| 13 | `SLTU`   | R    | 0110011 | 🧪 |
 
 ### Resumo de cobertura do ISA RV32I
 
 | Categoria          | Total ISA | Implementadas | Faltando |
 |--------------------|:---------:|:-------------:|:--------:|
-| R-type             | 10        | 5             | 5        |
+| R-type             | 10        | 10 (5 sem validação) | 0 |
 | I-type aritmético  | 9         | 0             | 9        |
 | I-type load        | 5         | 1 (LW)        | 4        |
 | S-type             | 3         | 1 (SW)        | 2        |
 | B-type             | 6         | 1 (BEQ)       | 5        |
 | U-type             | 2         | 0             | 2        |
-| J-type             | 2         | 0             | 2        |
-| **Total**          | **37**    | **8**         | **29**   |
+| Jumps (JAL/JALR)   | 2         | 0             | 2        |
+| **Total**          | **37**    | **13 (5 sem validação)** | **24** |
 
-### Instruções a implementar — Etapa 01
+### Etapa 01 — 27/10/2026: R-type
 
 #### Aritmética, lógica e deslocamentos (R-type)
 
 | # | Instrução | Tipo | Opcode  | Status |
 |---|-----------|------|---------|:------:|
-| 1 | `XOR`     | R    | 0110011 | ❌ |
-| 2 | `SLL`     | R    | 0110011 | ❌ |
-| 3 | `SRL`     | R    | 0110011 | ❌ |
-| 4 | `SRA`     | R    | 0110011 | ❌ |
-| 5 | `SLTU`    | R    | 0110011 | ❌ |
+| 1 | `XOR`     | R    | 0110011 | 🧪 |
+| 2 | `SLL`     | R    | 0110011 | 🧪 |
+| 3 | `SRL`     | R    | 0110011 | 🧪 |
+| 4 | `SRA`     | R    | 0110011 | 🧪 |
+| 5 | `SLTU`    | R    | 0110011 | 🧪 |
+
+As cinco operações estão em `src/pl_alu_ctrl.sv` e `src/pl_alu.sv`. Há um programa de exercício em `mifs/etapa01_instruction.mif` e sua imagem `mifs/etapa01_program.hex` (arquivos locais ainda não versionados), mas `modelsim/program.hex` não as exercita e não há resultado esperado/execução verificada para o novo programa. **Próximo passo:** conferir os casos de deslocamento de 0 e 31 bits, operandos negativos, comparação signed/unsigned e dependências de forwarding; automatizar a comparação do estado esperado antes de considerar a etapa validada.
+
+### Etapa 02 — 03/11/2026: imediatos e U-type
 
 #### Aritmética, lógica e deslocamentos com imediatos (I-type)
 
@@ -54,7 +65,18 @@ Processador RISC-V de 32 bits com pipeline de 5 estágios implementado em System
 | 6 | `SRLI`    | I    | 0010011 | ❌ |
 | 7 | `SRAI`    | I    | 0010011 | ❌ |
 
-### Instruções a implementar — Etapa 02
+O resumo de cobertura acima contabiliza também `SLTIU` e `XORI`, que fazem parte do RV32I, embora não estejam na lista de acompanhamento do PDF. As sete instruções acima são o escopo explícito da Etapa 02.
+
+#### Imediato superior (U-type)
+
+| # | Instrução | Tipo | Opcode  | Status |
+|---|-----------|------|---------|:------:|
+| 1 | `LUI`     | U    | 0110111 | ❌ |
+| 2 | `AUIPC`   | U    | 0010111 | ❌ |
+
+**Implementação necessária:** habilitar o opcode de I-type aritmético em `pl_control.sv`, gerar os imediatos em `pl_sign_ext.sv`, selecionar a operação em `pl_alu_ctrl.sv` e tratar `LUI`/`AUIPC` com o PC e a origem correta do resultado no pipeline. Validar sinal, limites dos imediatos e forwarding.
+
+### Etapa 03 — 10/11/2026: memória, branches e jumps
 
 #### Acesso à memória — loads (I-type)
 
@@ -82,19 +104,28 @@ Processador RISC-V de 32 bits com pipeline de 5 estágios implementado em System
 | 4 | `BLTU`    | B    | 1100011 | ❌ |
 | 5 | `BGEU`    | B    | 1100011 | ❌ |
 
-#### Jumps (J-type)
+#### Jumps (JAL J-type; JALR I-type)
 
 | # | Instrução | Tipo | Opcode  | Status |
 |---|-----------|------|---------|:------:|
 | 1 | `JAL`     | J    | 1101111 | ❌ |
 | 2 | `JALR`    | I    | 1100111 | ❌ |
 
-#### Imediato superior (U-type)
+**Implementação necessária:** usar `funct3` para selecionar tamanho, extensão de sinal e habilitação de bytes nos acessos à memória; distinguir as condições de branch; acrescentar alvo, retorno `PC+4` e flush para `JAL`/`JALR`. Hoje `pl_control.sv` reconhece os opcodes de load/store/branch sem diferenciar suas variantes, e `pl_dmem.sv` só escreve palavras inteiras.
 
-| # | Instrução | Tipo | Opcode  | Status |
-|---|-----------|------|---------|:------:|
-| 1 | `LUI`     | U    | 0110111 | ❌ |
-| 2 | `AUIPC`   | U    | 0010111 | ❌ |
+### Apresentação — 17/11/2026
+
+Entregar **código e relatório no repositório** e preparar explanação por grupos de instruções e demonstração na FPGA. Segundo `instructions/projeto.pdf` (na raiz do projeto), a avaliação é 70% implementação + relatório, 20% apresentação e 10% participação nos acompanhamentos.
+
+### Pendências transversais e ordem sugerida
+
+1. **Validar a Etapa 01:** usar o programa local em `mifs/etapa01_*` para criar uma verificação autochecking das cinco operações R-type sem substituir o teste legado de hazards; registrar resultados da simulação e versionar os artefatos quando estiverem prontos.
+2. **Corrigir a UART antes da demonstração:** `pl_top.sv` alimenta a CPU/MMIO a 10 MHz via PLL, mas `pl_mmio.sv` fixa `CLK_HZ=50_000_000` em `pl_uart`. Assim, a UART fica próxima de 1920 baud no top principal, não 9600. Parametrizar a frequência por top-level e conferir a variante `pl_top_no_pll.sv`.
+3. **Tornar os testes confiáveis:** `pl_cpu_tb.sv` considera a ausência de `golden.txt` como zero erros; fazer a ausência falhar e acrescentar casos específicos das etapas seguintes. Confirmar o diretório de execução, pois as memórias carregam `program.hex` e `data.hex` por caminhos relativos.
+4. **Preparar os projetos de ferramenta:** os arquivos `.mpf`, `.qpf`, `.qsf` e os MIFs de trabalho citados nas instruções de uso não estão versionados; verificar a criação/configuração do ModelSim e Quartus antes de depender dessas receitas. Validar síntese, timing e UART na placa, não apenas no código.
+5. **Revisar o assembler junto dos testes:** ele aceita instruções ainda não implementadas pela CPU; validar faixa e alinhamento dos imediatos (incluindo limites negativos) e evitar que uma montagem bem-sucedida seja confundida com um teste do hardware.
+
+**Critério para marcar ✅ nas novas instruções:** implementação no hardware + programa de teste com resultado esperado verificado em simulação; para a apresentação, acrescentar evidência de execução na FPGA. O PDF do projeto é a referência para datas e escopo das etapas.
 
 ---
 
@@ -134,7 +165,7 @@ Processador RISC-V de 32 bits com pipeline de 5 estágios implementado em System
 | `0x404` | 32 b | R | KEY\[3:0\] — botões push |
 | `0x408` | 32 b | W | LEDR\[17:0\] — LEDs vermelhos |
 | `0x40C` | 32 b | W | LEDG\[8:0\] — LEDs verdes |
-| `0x410` | 32 b | R/W | UART RS-232 (8N1, 9600 baud) |
+| `0x410` | 32 b | R/W | UART RS-232 (8N1; 9600 baud pretendidos, pendente de correção do clock) |
 | `0x414` | 32 b | R | Contador de ciclos de clock (32 bits, reset em 0) |
 
 Seleção: `alu_result[10] = 1` redireciona o acesso ao controlador MMIO (`pl_mmio`).
@@ -149,9 +180,14 @@ Seleção: `alu_result[10] = 1` redireciona o acesso ao controlador MMIO (`pl_mm
 |-----------|-----------|
 | `4'd01` ADD | LW, SW, ADD |
 | `4'd02` SUB | BEQ (comparação) |
+| `4'd03` XOR | XOR |
 | `4'd04` OR  | OR |
 | `4'd05` AND | AND |
+| `4'd06` SLL | SLL |
+| `4'd07` SRL | SRL |
+| `4'd08` SRA | SRA |
 | `4'd11` SLT | SLT |
+| `4'd12` SLTU | SLTU |
 
 ---
 
@@ -163,6 +199,7 @@ rv32i_pipelined_base_project/
 ├── src/                        Código-fonte SystemVerilog
 │   ├── pl_pipe_pkg.sv          Structs dos registradores de pipeline
 │   ├── pl_top.sv               Top-level (PLL 50→10 MHz + CPU)
+│   ├── pl_top_no_pll.sv        Top-level alternativo (clock direto de 50 MHz)
 │   ├── pl_cpu.sv               Wrapper: Control + ALU_Ctrl + Datapath
 │   ├── pl_control.sv           Unidade de controle (estágio ID)
 │   ├── pl_alu_ctrl.sv          Controle da ALU (estágio EX)
@@ -172,7 +209,7 @@ rv32i_pipelined_base_project/
 │   ├── pl_imem.sv              Memória de instruções 256×32 b (MIF)
 │   ├── pl_dmem.sv              Memória de dados 256×32 b (MIF)
 │   ├── pl_mmio.sv              Controlador MMIO (SW/KEY/LED/UART)
-│   ├── pl_uart.sv              UART RS-232 8N1 (9600 baud, 50 MHz)
+│   ├── pl_uart.sv              UART RS-232 8N1 (divisor parametrizável; ver pendência do clock)
 │   ├── pl_hazard.sv            Detecção de hazard load-use
 │   ├── pl_forward.sv           Unidade de forwarding
 │   ├── pl_datapath.sv          Datapath 5 estágios
@@ -180,46 +217,44 @@ rv32i_pipelined_base_project/
 │   └── pll_10mhz.v             PLL Altera (50 MHz → 10 MHz)
 │
 ├── mifs/                       Arquivos de inicialização de memória
-│   ├── instruction.mif         Programa de teste padrão
-│   ├── data.mif                Dados iniciais do programa de teste
+│   ├── instruction_halt_serial.mif  Programa demonstrativo com UART/LED
+│   ├── data_halt_serial.mif         Dados desse programa
 │   ├── mmio_test_program.mif   Programa de teste MMIO + UART
 │   └── mmio_test_data.mif      Dados para o teste MMIO
 │
 ├── assembler/
 │   ├── assembler.py            Montador Python: assembly → .mif / dump
 │   ├── hello.asm               Programa de entrada padrão
-│   ├── instruction.mif         MIF gerado (saída do assembler)
-│   ├── data.mif                MIF de dados gerado (modo --dump)
-│   └── program.hex             Hex gerado (modo normal)
+│   ├── instruction.mif         MIF gerado (não versionado)
+│   ├── data.mif                MIF gerado em --dump (não versionado)
+│   └── program.hex             Hex gerado (não versionado)
 │
 ├── dump/
 │   └── serial_dump.py          Captura e decodifica dump serial do FPGA
 │
-├── modelsim/                   Projeto ModelSim para simulação
-│   ├── *.mpf                   Arquivo de projeto ModelSim
+├── modelsim/                   Dados versionados para simulação
 │   ├── program.hex             Imagem da instrução (.hex para $readmemh)
 │   ├── data.hex                Imagem dos dados (.hex para $readmemh)
 │   ├── golden.txt              Saída esperada pelo testbench
-│   └── output.txt              Saída gerada na última simulação
 │
-└── quartus/                    Projeto Quartus Prime para síntese
-    ├── *.qpf / *.qsf           Arquivos de projeto Quartus
-    ├── instruction.mif         MIF da instrução (cópia de trabalho)
-    └── data.mif                MIF dos dados (cópia de trabalho)
+└── quartus/                    Arquivos auxiliares versionados para síntese
+    ├── add_to_qsf.txt          Atribuições de pinos para incorporar ao QSF
+    ├── pl_top.sdc              Restrições de timing com PLL
+    └── pl_top_no_pll.sdc       Restrições de timing sem PLL
 ```
 
 ---
 
 ## Como simular (ModelSim)
 
-1. Abra o ModelSim e carregue o projeto `modelsim/rv32i_pipelined_base_project.mpf`.
+1. Crie ou recupere um projeto ModelSim (o arquivo `.mpf` não está versionado) e use `modelsim/` como diretório de execução para localizar `program.hex`, `data.hex` e `golden.txt`.
 2. Compile todos os arquivos em `src/` — compilar `pl_pipe_pkg.sv` primeiro.
 3. Inicie a simulação com o top `pl_cpu_tb`.
 4. Execute `run -all`.
 
 O testbench detecta o halt automaticamente (repetição periódica do PC causada pelo `beq x0, x0, 0`), imprime o estado final dos registradores e da memória, e compara a saída com `modelsim/golden.txt`.
 
-**Programa de teste padrão (`mifs/instruction.mif`):**
+**Programa de teste padrão (`modelsim/program.hex`):**
 
 ```
 000: lw  x1,  0(x0)   x1 = 10
@@ -243,8 +278,8 @@ Estado final esperado: `x1=10  x2=20  x3=30  x4=10  x5=10  x6=30  x7=30  x8=20  
 
 ## Como sintetizar (Quartus)
 
-1. Abra o Quartus Prime e carregue `quartus/rv32i_pipelined_base_project.qpf`.
-2. Verifique que os arquivos `instruction.mif` e `data.mif` estão na pasta `quartus/`.
+1. Crie ou recupere o projeto Quartus para a DE2-115 (`.qpf`/`.qsf` não versionados), selecionando o top-level e incluindo os arquivos de `src/` (compile o pacote primeiro). Use `quartus/add_to_qsf.txt` e o `.sdc` correspondente ao top-level.
+2. Gere ou copie `instruction.mif` e `data.mif` para o diretório onde a inicialização da RAM será resolvida pelo Quartus; eles não estão versionados em `quartus/`.
 3. Execute **Processing → Start Compilation**.
 4. Grave o bitstream na DE2-115 via JTAG.
 
@@ -279,7 +314,7 @@ Todos os arquivos de saída são gerados na pasta `assembler/`.
 
 | Arquivo | Formato | Uso |
 |---------|---------|-----|
-| `instruction.mif` | Quartus MIF | Síntese (Quartus) e simulação (ModelSim via `ram_init_file`) |
+| `instruction.mif` | Quartus MIF | Inicialização da memória na síntese Quartus |
 | `program.hex` | Um word hex por linha | Simulação via `$readmemh` |
 
 ### Modo `--dump`
@@ -341,9 +376,9 @@ A escrita no banco de registradores ocorre na **borda de descida** do clock (`ne
 
 O halt é implementado como `beq x0, x0, 0`. Com resolução de branch no estágio EX, o PC oscila com período 3 (H, H+4, H+8, H, …). O testbench detecta halt quando `PC_atual == PC_de_3_ciclos_atrás` por 9 ciclos consecutivos (3 períodos completos).
 
-### UART (9600 8N1 a 50 MHz)
+### UART (9600 8N1 pretendidos; clock pendente)
 
-Implementada em `pl_uart.sv` (parâmetros `CLK_HZ=50_000_000`, `BAUD=9600`). Taxa de erro: < 0,1% (5208 clocks/bit, baud efetivo 9601). O sequenciador de 4 bytes em `pl_mmio.sv` divide automaticamente cada `sw` em 0x410 em 4 transmissões consecutivas, liberando o software de enviar byte a byte.
+Implementada em `pl_uart.sv` e instanciada por `pl_mmio.sv` com `CLK_HZ=50_000_000` e `BAUD=9600`: **na variante sem PLL, a 50 MHz**, são 5208 clocks/bit (~9601 baud). **No top principal com PLL, a 10 MHz**, o mesmo divisor produz aproximadamente 1920 baud. Antes de usar o dump serial a 9600 baud, é necessário passar a frequência real do clock para a UART e testar na FPGA. O sequenciador de `pl_mmio.sv` divide cada `sw` em 0x410 em quatro bytes consecutivos.
 
 ### Dump serial
 
@@ -355,7 +390,7 @@ python3 dump/serial_dump.py /dev/ttyUSB0   # Linux
 python3 dump/serial_dump.py COM3 --out resultado.txt
 ```
 
-Aguarda **164 bytes** (41 palavras × ~4 ms a 9600 baud) e exibe ciclos, x1–x8 e dmem[0x000–0x07C]. Para usar, compile com `python3 assembler.py --dump` e grave o bitstream no FPGA.
+Aguarda **164 bytes** (41 palavras × ~4 ms a 9600 baud, **após corrigir o clock**) e exibe ciclos, x1–x8 e dmem[0x000–0x07C]. Para usar, compile com `python3 assembler.py --dump` e grave o bitstream no FPGA.
 
 **Fluxo completo:**
 

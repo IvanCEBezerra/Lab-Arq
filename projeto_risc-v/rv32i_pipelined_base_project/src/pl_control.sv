@@ -38,14 +38,17 @@ module pl_control (
     output logic       MemRead,
     output logic       MemWrite,
     output logic       Branch,
+    output logic [1:0] Jump,
     output logic [1:0] ALUOp
 );
 
     localparam R_TYPE = 7'b0110011;
     localparam I_TYPE = 7'b0010011; // ADDI, ANDI, ORI, SLTI, SLLI, SRLI, SRAI
-    localparam LOAD   = 7'b0000011; // LW
-    localparam STORE  = 7'b0100011; // SW
-    localparam BRANCH = 7'b1100011; // BEQ
+    localparam LOAD   = 7'b0000011; // LB, LH, LW, LBU, LHU
+    localparam STORE  = 7'b0100011; // SB, SH, SW
+    localparam BRANCH = 7'b1100011; // BEQ, BNE, BLT, BGE, BLTU, BGEU
+    localparam JALR   = 7'b1100111; // JALR
+    localparam JAL    = 7'b1101111; // JAL
     localparam LUI    = 7'b0110111; // LUI
     localparam AUIPC  = 7'b0010111; // AUIPC
 
@@ -57,6 +60,7 @@ module pl_control (
         MemRead  = 1'b0;
         MemWrite = 1'b0;
         Branch   = 1'b0;
+        Jump     = 2'b00;
         ALUOp    = 2'b00;
 
         case (Opcode)
@@ -106,6 +110,14 @@ module pl_control (
                 MemtoReg = 1'b0;  // dado escrito em rd vem da ALU
                 RegWrite = 1'b1;  // habilita escrita em rd
                 ALUOp    = 2'b00; // operacao ADD: PC + ImmExt
+            end
+            JAL: begin
+                Jump     = 2'b01;
+                RegWrite = 1'b1;
+            end
+            JALR: begin
+                Jump     = 2'b10;
+                RegWrite = 1'b1;
             end
             default: ; // sinais permanecem em zero (seguro)
         endcase
