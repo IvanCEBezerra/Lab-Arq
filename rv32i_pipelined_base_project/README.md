@@ -19,26 +19,29 @@ Os testes de memória usam endereços naturalmente alinhados.
 
 ## Rodar um programa novo no ModelSim
 
-Na raiz do projeto, com Python 3 e ModelSim no PATH, passe o caminho do arquivo
-`.asm` recebido ou criado no editor. Use aspas para caminhos com espaços.
+Na raiz do projeto, monte o programa com Python 3:
 
 ```powershell
 python assembler/assembler.py --output-dir modelsim/novo "caminho/meu_programa.asm"
-vsim -c -do "set run_dir modelsim/novo; set sim_args {+DUMP_ONLY +MAX_CYCLES=20000}; do modelsim/run.do"
 ```
 
-O montador gera os quatro arquivos de memória. Quando há espaço, acrescenta um
-laço de parada após o código. O testbench também reconhece um desvio ou salto
-para o próprio endereço já existente no programa. Um programa que ocupa as
-256 palavras precisa incluir sua própria parada. O estado final sai no terminal
-e em `modelsim/novo/output.txt`. Na seção final do relatório, palavras de RAM
-omitidas valem zero. Para programas longos, ajuste `+MAX_CYCLES`.
+1. No ModelSim, use `modelsim/novo/` como diretório de execução.
+2. Compile `src/pl_pipe_pkg.sv` primeiro e depois as demais fontes `.sv` de
+   `src/`, deixando de fora `pl_top.sv` e `pl_top_no_pll.sv`.
+3. No Transcript, carregue e rode o testbench:
 
-Para rodar a regressão original com `modelsim/golden.txt`:
+   ```tcl
+   vsim -voptargs=+acc work.pl_cpu_tb +DUMP_ONLY +MAX_CYCLES=20000
+   run -all
+   ```
 
-```powershell
-vsim -c -do modelsim/run.do
-```
+O testbench grava registradores e RAM em `modelsim/novo/output.txt`.
+Na seção final do relatório, palavras de RAM omitidas valem zero. O montador
+acrescenta um laço de parada quando há espaço. Um programa que ocupa as 256
+palavras precisa incluir sua própria parada.
+
+Para repetir a regressão da base, use `modelsim/` como diretório de execução
+e carregue `work.pl_cpu_tb` sem `+DUMP_ONLY` para comparar com `golden.txt`.
 
 ---
 
@@ -150,7 +153,6 @@ rv32i_pipelined_base_project/
 │   ├── program.hex             Imagem da instrução (.hex para $readmemh)
 │   ├── data.hex                Imagem dos dados (.hex para $readmemh)
 │   ├── golden.txt              Saída esperada pela regressão
-│   ├── run.do                  Compila e executa o testbench original
 │
 └── quartus/                    Arquivos auxiliares versionados para síntese
     ├── add_to_qsf.txt          Atribuições de pinos para incorporar ao QSF
@@ -190,7 +192,6 @@ Na raiz do projeto, monte o programa de sua escolha e confira as imagens locais:
 
 ```powershell
 python assembler/assembler.py --dump --output-dir quartus "caminho/meu_programa.asm"
-python quartus/check_project.py
 ```
 
 Abra `quartus/pl_top.qpf`, recompile para a DE2-115 e grave o novo bitstream.

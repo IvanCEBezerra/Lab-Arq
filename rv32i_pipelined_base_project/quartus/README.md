@@ -8,29 +8,17 @@ UART. Para trocar de programa, rode na raiz do projeto:
 
 ```powershell
 python assembler/assembler.py --dump --output-dir quartus "caminho/meu_programa.asm"
-python quartus/check_project.py
 ```
 
 O montador grava os pares `instruction.mif`/`program.hex` e
 `data.mif`/`data.hex` a partir das mesmas palavras. Recompile o projeto
 dentro de `quartus/` após trocar as imagens.
 
-## Checagem sem Quartus
-
-A partir da raiz de `rv32i_pipelined_base_project/`:
-
-```sh
-python quartus/check_project.py
-```
-
-Verifica arquivos/caminhos e ordem do package, 52 pinos sem colisões e iguais à referência local, nomes de pinos sem chaves literais, top/PLL, SDC, padrões de I/O, atributos da RAM, MIFs inteiros de 256 × 32 bits e HEXs com o mesmo conteúdo. Não tenta validar o QSF por `source` em um `tclsh` genérico: esse teste aceitou chaves que o Quartus tratou como parte do nome. **Não** prova inferência de RAM, utilização das imagens pela ferramenta, posicionamento de PLL, timing ou funcionamento físico.
-
 ## No PC com Quartus
 
 No terminal da instalação Quartus (`quartus_sh` no PATH), execute da **pasta `quartus/`**:
 
 ```sh
-python3 check_project.py
 quartus_sh --flow compile pl_top -c pl_top
 ```
 

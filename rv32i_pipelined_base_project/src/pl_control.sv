@@ -65,51 +65,37 @@ module pl_control (
 
         case (Opcode)
             R_TYPE: begin
-                ALUSrcA  = 2'b00;
-                ALUSrc   = 1'b0;
-                MemtoReg = 1'b0;
                 RegWrite = 1'b1;
                 ALUOp    = 2'b10;
             end
             I_TYPE: begin
-                ALUSrcA  = 2'b00;
                 ALUSrc   = 1'b1;
-                MemtoReg = 1'b0;
                 RegWrite = 1'b1;
                 ALUOp    = 2'b11;
             end
             LOAD: begin
-                ALUSrcA  = 2'b00;
                 ALUSrc   = 1'b1;
                 MemtoReg = 1'b1;
                 RegWrite = 1'b1;
                 MemRead  = 1'b1;
-                ALUOp    = 2'b00;
             end
             STORE: begin
-                ALUSrcA  = 2'b00;
                 ALUSrc   = 1'b1;
                 MemWrite = 1'b1;
-                ALUOp    = 2'b00;
             end
             BRANCH: begin
-                ALUSrcA  = 2'b00;
                 Branch   = 1'b1;
                 ALUOp    = 2'b01;
             end
             LUI: begin
                 ALUSrcA  = 2'b10; // seleciona constante 0 na entrada SrcA
                 ALUSrc   = 1'b1;  // seleciona ImmExt na entrada SrcB
-                MemtoReg = 1'b0;  // dado escrito em rd vem da ALU
                 RegWrite = 1'b1;  // habilita escrita em rd
-                ALUOp    = 2'b00; // operacao ADD: 0 + ImmExt = ImmExt
             end
             AUIPC: begin
                 ALUSrcA  = 2'b01; // seleciona PC na entrada SrcA
                 ALUSrc   = 1'b1;  // seleciona ImmExt na entrada SrcB
-                MemtoReg = 1'b0;  // dado escrito em rd vem da ALU
                 RegWrite = 1'b1;  // habilita escrita em rd
-                ALUOp    = 2'b00; // operacao ADD: PC + ImmExt
             end
             JAL: begin
                 Jump     = 2'b01;

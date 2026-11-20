@@ -31,15 +31,15 @@ NOP_WORD = "00000013"  # addi x0, x0, 0
 #   x13=status tmp, x14=ptr, x15=UART addr, x16=ptr end,
 #   x17=tx_busy mask, x18=step, x19=word to send,
 #   x20=MMIO base, x21=LEDG, x22=CYCLE addr, x23=saves start, x24=saves end
-INFRA_DATA = [
-    (INFRA_WBASE + 0, 0x00000410, "UART TX/status addr      -> x15"),
-    (INFRA_WBASE + 1, 0x00000200, "tx_busy mask (bit 9)     -> x17"),
-    (INFRA_WBASE + 2, 0x00000004, "step = 4                 -> x18"),
-    (INFRA_WBASE + 3, 0x00000400, "MMIO base 0x400          -> x20"),
-    (INFRA_WBASE + 4, 0x000001FF, "LEDG all-on 0x1FF        -> x21"),
-    (INFRA_WBASE + 5, SAVES_BBASE, f"saves start byte 0x{SAVES_BBASE:03X} -> x23"),
-    (INFRA_WBASE + 6, SAVES_BEND,  f"saves end   byte 0x{SAVES_BEND:03X} -> x24"),
-]
+INFRA_DATA = (
+    0x410,       # x15: endereço e status da UART
+    0x200,       # x17: máscara de TX ocupado
+    4,           # x18: passo em bytes
+    0x400,       # x20: base MMIO
+    0x1FF,       # x21: acende os LEDs verdes
+    SAVES_BBASE, # x23: início dos registradores salvos
+    SAVES_BEND,  # x24: fim exclusivo
+)
 
 INSTRUCTION = {
  "lui": {
@@ -455,76 +455,32 @@ def assemble(source, max_words):
 
 
 def build_dump_code():
-	"""Returns the dump code (Parts 2-8) as a list of (assembly, comment).
+    """Preserva x1–x8 e envia ciclos, registradores e RAM pela UART."""
+    code = [f"sw x{reg},{SAVES_BBASE + (reg - 1) * 4}(x0)" for reg in range(1, 9)]
+    for offset, reg in enumerate((15, 17, 18, 20, 21, 23, 24)):
+        code.append(f"lw x{reg},{INFRA_BBASE + offset * 4}(x0)")
 
-	Designed to be placed at DUMP_START (word address 0x80).
-	All internal branch offsets are PC-relative and position-independent:
-	  POLL back  : beq x0,x0,-12
-	  POLL fwd   : beq x13,x0,8
-	  Loop back  : beq x0,x0,-32
-	  Loop done  : beq x14,x16,8  (or beq x14,x0,8 for cycle poll-only)
-	"""
-	b = INFRA_BBASE  # byte base for infrastructure lw offsets (0x200)
-	code = []
+    # Aguarda TX livre antes de enviar a palavra em x19.
+    send_word = [
+        "lw x13,0(x15)",
+        "and x13,x13,x17",
+        "beq x13,x0,8",
+        "beq x0,x0,-12",
+        "sw x19,0(x15)",
+    ]
+    send_range = [
+        "lw x19,0(x14)",
+        *send_word,
+        "add x14,x14,x18",
+        "beq x14,x16,8",
+        "beq x0,x0,-32",
+    ]
 
-	# Part 2: save x1-x8 to dmem word addr 0x78-0x7F (bytes 0x1E0-0x1FC)
-	for i in range(1, 9):
-		code.append((f"sw x{i},{SAVES_BBASE + (i-1)*4}(x0)",
-		             f"x{i} -> dmem[0x{SAVES_WBASE + i - 1:02X}]"))
-
-	# Part 3: load infrastructure constants
-	code.append((f"lw x15,{b+0}(x0)",  "x15 = 0x410  UART TX/status"))
-	code.append((f"lw x17,{b+4}(x0)",  "x17 = 0x200  tx_busy mask"))
-	code.append((f"lw x18,{b+8}(x0)",  "x18 = 4      step"))
-	code.append((f"lw x20,{b+12}(x0)", "x20 = 0x400  MMIO base"))
-	code.append((f"lw x21,{b+16}(x0)", "x21 = 0x1FF  LEDG all-on"))
-	code.append((f"lw x23,{b+20}(x0)", "x23 = saves start"))
-	code.append((f"lw x24,{b+24}(x0)", "x24 = saves end"))
-
-	# Part 4: send cycle count (MMIO 0x414)
-	code.append(("add x22,x15,x18",  "x22 = 0x414  CYCLE MMIO"))
-	code.append(("lw x19,0(x22)",    "x19 = cycle count"))
-	code.append(("lw x13,0(x15)",    "POLL: read UART status"))
-	code.append(("and x13,x13,x17",  "      isolate tx_busy"))
-	code.append(("beq x13,x0,8",     "      free? -> SEND"))
-	code.append(("beq x0,x0,-12",    "      busy? -> POLL"))
-	code.append(("sw x19,0(x15)",    "SEND  cycles (4 bytes hw)"))
-
-	# Part 5: loop — send saved x1-x8
-	code.append(("add x14,x23,x0",  "x14 = saves start ptr"))
-	code.append(("add x16,x24,x0",  "x16 = saves end ptr"))
-	# REG_LOOP:
-	code.append(("lw x19,0(x14)",   "REG_LOOP: load saved reg"))
-	code.append(("lw x13,0(x15)",   "POLL"))
-	code.append(("and x13,x13,x17", "      isolate tx_busy"))
-	code.append(("beq x13,x0,8",    "      free? -> SEND"))
-	code.append(("beq x0,x0,-12",   "      busy? -> POLL"))
-	code.append(("sw x19,0(x15)",   "SEND  reg (4 bytes hw)"))
-	code.append(("add x14,x14,x18", "      ptr += 4"))
-	code.append(("beq x14,x16,8",   "      done? skip loop-back"))
-	code.append(("beq x0,x0,-32",   "      -> REG_LOOP"))
-
-	# Part 6: loop — send dmem[0x000..0x07C]
-	code.append(("add x14,x0,x0",   "x14 = 0     mem start ptr"))
-	code.append(("add x16,x23,x0",  "x16 = 0x80  mem end ptr"))
-	# MEM_LOOP:
-	code.append(("lw x19,0(x14)",   "MEM_LOOP: load mem word"))
-	code.append(("lw x13,0(x15)",   "POLL"))
-	code.append(("and x13,x13,x17", "      isolate tx_busy"))
-	code.append(("beq x13,x0,8",    "      free? -> SEND"))
-	code.append(("beq x0,x0,-12",   "      busy? -> POLL"))
-	code.append(("sw x19,0(x15)",   "SEND  mem word (4 bytes hw)"))
-	code.append(("add x14,x14,x18", "      ptr += 4"))
-	code.append(("beq x14,x16,8",   "      done? skip loop-back"))
-	code.append(("beq x0,x0,-32",   "      -> MEM_LOOP"))
-
-	# Part 7: light all green LEDs
-	code.append(("sw x21,12(x20)", "LEDG[8:0] = 0x1FF  (addr 0x40C)"))
-
-	# Part 8: halt
-	code.append(("beq x0,x0,0", "halt: infinite loop"))
-
-	return code
+    code.extend(["add x22,x15,x18", "lw x19,0(x22)", *send_word])  # ciclos
+    code.extend(["add x14,x23,x0", "add x16,x24,x0", *send_range])  # x1–x8
+    code.extend(["add x14,x0,x0", "add x16,x23,x0", *send_range])    # RAM
+    code.extend(["sw x21,12(x20)", "beq x0,x0,0"])
+    return code
 
 
 def write_images(directory, program, data=None, complete=True):
@@ -559,11 +515,11 @@ def main():
             branch = encode("beq", ["x0", "x0", str(4 * (DUMP_START - source_words))], {}, 0)
             program.append(f"{branch:08X}")
             program.extend([NOP_WORD] * (DUMP_START - len(program)))
-            for instruction, _ in build_dump_code():
+            for instruction in build_dump_code():
                 word = encode(*parse_instruction(instruction), {}, 0)
                 program.append(f"{word:08X}")
             data = ["00000000"] * DEPTH
-            for address, value, _ in INFRA_DATA:
+            for address, value in enumerate(INFRA_DATA, INFRA_WBASE):
                 data[address] = f"{value:08X}"
             write_images(directory, program, data)
         elif args.output_dir is not None:

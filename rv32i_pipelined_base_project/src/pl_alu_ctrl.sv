@@ -9,7 +9,7 @@
 //     2'b10 : R-type               -> decodificar via Funct3/Funct7
 //     2'b11 : I-type               -> decodificar via Funct3/Funct7 (ADDI sempre ADD)
 //   Funct7[6:0], Funct3[2:0] : campos da instrucao
-//   Funct3: valores declarados em assembly.py
+//   Funct3: valores declarados em assembler.py
 // Saida Operation[3:0] -> pl_alu.sv:
 //   4'd01 ADD  4'd02 SUB  4'd03 XOR  4'd04 OR   4'd05 AND  4'd06 SLL 
 //   4'd07 SRL  4'd08 SRA  4'd11 SLT 4'd12 SLTU
@@ -42,9 +42,9 @@ localparam [3:0] ALU_SLTU = 4'd12;
 
             2'b01: Operation = ALU_SUB;   // Branch BEQ  -> SUB
 
-            2'b10: begin                // R-type: decodificar Funct
+            2'b10, 2'b11: begin         // R-type e I-type compartilham Funct3
                 case (Funct3)
-                    3'b000: Operation = Funct7[5] ? ALU_SUB : ALU_ADD; // SUB ou ADD
+                    3'b000: Operation = (ALUOp == 2'b10 && Funct7[5]) ? ALU_SUB : ALU_ADD;
                     3'b001: Operation = ALU_SLL;
                     3'b010: Operation = ALU_SLT;
                     3'b011: Operation = ALU_SLTU;
@@ -52,20 +52,6 @@ localparam [3:0] ALU_SLTU = 4'd12;
                     3'b101: Operation = Funct7[5] ? ALU_SRA : ALU_SRL; // shift-right aritmetico ou logico
                     3'b110: Operation = ALU_OR; 
                     3'b111: Operation = ALU_AND;  
-                    default: Operation = ALU_ADD;
-                endcase
-            end
-
-            2'b11: begin                // I-type: decodificar Funct3 e Funct7 (shifts)
-                case (Funct3)
-                    3'b000: Operation = ALU_ADD;                         // ADDI (sempre ADD)
-                    3'b001: Operation = ALU_SLL;                         // SLLI
-                    3'b010: Operation = ALU_SLT;                         // SLTI
-                    3'b011: Operation = ALU_SLTU;                        // SLTIU
-                    3'b100: Operation = ALU_XOR;                         // XORI
-                    3'b101: Operation = Funct7[5] ? ALU_SRA : ALU_SRL;  // SRAI ou SRLI
-                    3'b110: Operation = ALU_OR;                          // ORI
-                    3'b111: Operation = ALU_AND;                         // ANDI
                     default: Operation = ALU_ADD;
                 endcase
             end

@@ -126,7 +126,6 @@ module pl_cpu_tb;
     // Deteccao de halt e execucao principal
     // =========================================================================
     logic halted, dump_only;
-    logic simulation_ok = 1'b0;
     logic [31:0] halt_pc;
     integer cycle_cnt, max_cycles, report_words;
     integer i, errors;
@@ -195,7 +194,6 @@ module pl_cpu_tb;
                 $fatal(1, "FAIL: %0d diferenca(s) encontrada(s).", errors);
             $display("PASS: saida corresponde ao golden.");
         end
-        simulation_ok = 1'b1;
         $finish;
     end
 
