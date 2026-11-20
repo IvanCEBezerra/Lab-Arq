@@ -28,6 +28,7 @@ auipc x6,3
 
 import argparse
 import os
+import shutil
 
 # ---------------------------------------------------------------------------
 # --dump mode constants
@@ -666,6 +667,10 @@ def main_dump(src):
 			exit(2)
 		user_encoded.append((f"{int(binary, 2):08X}", instr))
 
+	if user_encoded and user_encoded[-1][0] == "00000063":
+		removed_hex, removed_instr = user_encoded.pop()
+		print(f"Aviso: instrucao final '{removed_instr}' removida automaticamente para redirecionar ao --dump.")
+
 	n_user = len(user_encoded)
 	if n_user >= DUMP_START:
 		print(f"Erro: {n_user} instrucoes do usuario excedem o limite de "
@@ -750,6 +755,41 @@ def main_dump(src):
 			f.write(f"{word_addr:03X} : {value:08X};  -- {desc}\n")
 		f.write("\nEND;\n")
 
+	# ---- Write program.hex and data.hex (para $readmemh / Quartus) ---------
+	prog_hex_words = [NOP_WORD] * 256
+	for i, (hex_word, _) in enumerate(user_encoded):
+		prog_hex_words[i] = hex_word
+	prog_hex_words[beq_word_addr] = beq_hex
+	for i, (hex_word, _, _) in enumerate(dump_encoded):
+		prog_hex_words[DUMP_START + i] = hex_word
+
+	data_hex_words = ["00000000"] * 256
+	for word_addr, value, _ in INFRA_DATA:
+		data_hex_words[word_addr] = f"{value:08X}"
+
+	prog_hex_path = os.path.join(script_dir, "program.hex")
+	data_hex_path = os.path.join(script_dir, "data.hex")
+	with open(prog_hex_path, "w") as f:
+		f.write("\n".join(prog_hex_words) + "\n")
+	with open(data_hex_path, "w") as f:
+		f.write("\n".join(data_hex_words) + "\n")
+
+	# ---- Sync slot-in para ../src e ../quartus ----------------------------
+	project_root = os.path.dirname(script_dir)
+	src_dir      = os.path.join(project_root, "src")
+	quartus_dir  = os.path.join(project_root, "quartus")
+	synced = []
+	if os.path.isdir(src_dir):
+		shutil.copy2(instr_path, os.path.join(src_dir, "instruction.mif"))
+		shutil.copy2(data_path,  os.path.join(src_dir, "data.mif"))
+		synced.append("src/ (instruction.mif, data.mif)")
+	if os.path.isdir(quartus_dir):
+		shutil.copy2(instr_path,    os.path.join(quartus_dir, "instruction.mif"))
+		shutil.copy2(data_path,     os.path.join(quartus_dir, "data.mif"))
+		shutil.copy2(prog_hex_path, os.path.join(quartus_dir, "program.hex"))
+		shutil.copy2(data_hex_path, os.path.join(quartus_dir, "data.hex"))
+		synced.append("quartus/ (instruction.mif, data.mif, program.hex, data.hex)")
+
 	# ---- Summary -----------------------------------------------------------
 	print("Geracao com --dump concluida.\n")
 	print(f"  {instr_path}")
@@ -762,6 +802,10 @@ def main_dump(src):
 	print(f"\n  {data_path}")
 	print(f"    zeros + constantes em"
 	      f" 0x{INFRA_WBASE:03X}..0x{INFRA_WBASE + len(INFRA_DATA) - 1:03X}")
+	if synced:
+		print("\n  Sincronizado (slot-in):")
+		for s in synced:
+			print(f"    - {s}")
 
 
 def main():
